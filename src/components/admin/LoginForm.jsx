@@ -197,12 +197,6 @@ const LoginForm = ({ isAuthenticated }) => {
               </div>
             )}
 
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              <strong>Demo Credentials:</strong><br/>
-              Email: admin@zuna.com<br/>
-              Password: Cgs@001a
-            </div>
-
             <form onSubmit={handleLogin}>
               <div className="admin-input-group">
                 <label>Email Address</label>
