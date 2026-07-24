@@ -94,16 +94,44 @@ const TicketsTable = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const SUPPORT_AGENTS = ['Unassigned', 'Sarah Jenkins', 'Mohamed Asfaque', 'Alex Rivera', 'John Doe', 'Tech Support'];
+
   const handleTicketStatusChange = async (ticketId, newStatus) => {
     try {
       await ticketsService.updateTicketStatus(ticketId, newStatus);
       fetchTicketsAndProducts();
       if (selectedTicket && selectedTicket.id === ticketId) {
-        setSelectedTicket({ ...selectedTicket, status: newStatus });
+        setSelectedTicket(prev => prev ? { ...prev, status: newStatus } : null);
       }
     } catch (err) {
       console.error('Error updating status:', err);
       alert('Failed to update ticket status');
+    }
+  };
+
+  const handlePriorityChange = async (ticketId, newPriority) => {
+    try {
+      await ticketsService.updateTicketPriority(ticketId, newPriority);
+      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, priority: newPriority } : t));
+      if (selectedTicket && selectedTicket.id === ticketId) {
+        setSelectedTicket(prev => prev ? { ...prev, priority: newPriority } : null);
+      }
+    } catch (err) {
+      console.error('Error updating priority:', err);
+      alert('Failed to update ticket priority');
+    }
+  };
+
+  const handleAgentChange = async (ticketId, newAgent) => {
+    try {
+      await ticketsService.updateTicketAgent(ticketId, newAgent);
+      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, assignedAgent: newAgent } : t));
+      if (selectedTicket && selectedTicket.id === ticketId) {
+        setSelectedTicket(prev => prev ? { ...prev, assignedAgent: newAgent } : null);
+      }
+    } catch (err) {
+      console.error('Error updating assigned agent:', err);
+      alert('Failed to update assigned agent');
     }
   };
 
@@ -159,22 +187,22 @@ const TicketsTable = () => {
   };
 
   const renderPriorityBadge = (priority) => {
-    const p = priority || 'Medium';
-    if (p === 'Urgent') {
+    const p = (priority || 'medium').toString().trim().toLowerCase();
+    if (p === 'urgent') {
       return (
         <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.74rem', fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
           ⚡ Urgent
         </span>
       );
     }
-    if (p === 'High') {
+    if (p === 'high') {
       return (
         <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.74rem', fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
           High
         </span>
       );
     }
-    if (p === 'Low') {
+    if (p === 'low') {
       return (
         <span style={{ background: 'rgba(148, 163, 184, 0.15)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.3)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.74rem', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
           Low
@@ -239,10 +267,28 @@ const TicketsTable = () => {
     );
   };
 
+  const getTicketTimestamp = (ticket) => {
+    const val = ticket.createdAt;
+    if (!val) return 0;
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const parsed = new Date(val).getTime();
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    if (val?.toDate && typeof val.toDate === 'function') {
+      return val.toDate().getTime();
+    }
+    if (val?.seconds) {
+      return val.seconds * 1000;
+    }
+    return 0;
+  };
+
   const filteredTickets = tickets.filter(ticket => {
     const customerName = ticket.clientName || ticket.raisedBy?.name || ticket.customer_name || '';
     const customerEmail = ticket.clientEmail || ticket.raisedBy?.email || ticket.customer_email || '';
     const prodName = ticket.productName || ticket.product_name || '';
+    const ticketPriority = (ticket.priority || 'medium').toString().trim().toLowerCase();
 
     const matchesSearch = 
       ticket.id.toLowerCase().includes(ticketSearch.toLowerCase()) ||
@@ -253,10 +299,10 @@ const TicketsTable = () => {
     
     const matchesStatus = ticketStatusFilter === 'all' || ticket.status === ticketStatusFilter;
     const matchesProduct = ticketProductFilter === 'all' || prodName.toLowerCase().includes(ticketProductFilter.toLowerCase());
-    const matchesPriority = ticketPriorityFilter === 'all' || (ticket.priority || 'Medium') === ticketPriorityFilter;
+    const matchesPriority = ticketPriorityFilter === 'all' || ticketPriority === ticketPriorityFilter.toLowerCase();
 
     return matchesSearch && matchesStatus && matchesProduct && matchesPriority;
-  });
+  }).sort((a, b) => getTicketTimestamp(b) - getTicketTimestamp(a));
 
   const handleExportExcel = () => {
     const data = filteredTickets.map(t => ({
@@ -443,8 +489,18 @@ const TicketsTable = () => {
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {renderProductBadge(prodName)}
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    {renderPriorityBadge(ticket.priority)}
+                  <td style={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
+                    <select
+                      className="filter-select"
+                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.78rem', borderRadius: '50px', cursor: 'pointer', fontWeight: 600 }}
+                      value={(ticket.priority || 'medium').toString().toLowerCase()}
+                      onChange={(e) => handlePriorityChange(ticket.id, e.target.value)}
+                    >
+                      <option value="urgent">⚡ Urgent</option>
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                    </select>
                   </td>
                   <td style={{ maxWidth: '280px' }}>
                     <strong style={{ color: 'var(--admin-text-main)', fontSize: '0.88rem', display: 'block', marginBottom: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ticket.subject}</strong>
@@ -455,11 +511,20 @@ const TicketsTable = () => {
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {renderStatusBadge(ticket.status)}
                   </td>
-                  <td style={{ fontSize: '0.85rem', color: 'var(--admin-text-main)', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                    {ticket.assignedAgent || 'Sarah Jenkins'}
+                  <td style={{ fontSize: '0.85rem', color: 'var(--admin-text-main)', fontWeight: 500, whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
+                    <select
+                      className="filter-select"
+                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.78rem', borderRadius: '8px', cursor: 'pointer', maxWidth: '145px' }}
+                      value={ticket.assignedAgent || 'Unassigned'}
+                      onChange={(e) => handleAgentChange(ticket.id, e.target.value)}
+                    >
+                      {SUPPORT_AGENTS.map(agent => (
+                        <option key={agent} value={agent}>{agent}</option>
+                      ))}
+                    </select>
                   </td>
                   <td style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap' }}>
-                    {typeof ticket.createdAt === 'string' ? new Date(ticket.createdAt).toLocaleDateString() : (ticket.createdAt?.toDate ? ticket.createdAt.toDate().toLocaleDateString() : 'Today')}
+                    {typeof ticket.createdAt === 'string' ? new Date(ticket.createdAt).toLocaleDateString('en-GB') : (ticket.createdAt?.toDate ? ticket.createdAt.toDate().toLocaleDateString('en-GB') : 'Today')}
                   </td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
                     <button 
@@ -511,20 +576,43 @@ const TicketsTable = () => {
             </div>
 
             {/* Metadata Controls */}
-            <div style={{ padding: '0.85rem 0', borderBottom: '1px solid var(--admin-border)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', fontSize: '0.82rem' }}>
+            <div style={{ padding: '0.85rem 0', borderBottom: '1px solid var(--admin-border)', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.65rem', fontSize: '0.82rem' }}>
               <div>
                 <span style={{ color: 'var(--admin-text-muted)', display: 'block', fontSize: '0.74rem' }}>Client Name</span>
-                <strong style={{ color: 'var(--admin-text-main)' }}>{selectedTicket.clientName || selectedTicket.customer_name || 'Acme Corp'}</strong>
+                <strong style={{ color: 'var(--admin-text-main)', display: 'block', marginTop: '0.2rem' }}>{selectedTicket.clientName || selectedTicket.customer_name || 'Client'}</strong>
               </div>
               <div>
-                <span style={{ color: 'var(--admin-text-muted)', display: 'block', fontSize: '0.74rem' }}>Assigned Agent</span>
-                <strong style={{ color: 'var(--admin-text-main)' }}>{selectedTicket.assignedAgent || 'Sarah Jenkins'}</strong>
-              </div>
-              <div>
-                <span style={{ color: 'var(--admin-text-muted)', display: 'block', fontSize: '0.74rem' }}>Update Status</span>
+                <span style={{ color: 'var(--admin-text-muted)', display: 'block', fontSize: '0.74rem', marginBottom: '0.2rem' }}>Assigned Agent</span>
                 <select 
                   className="filter-select"
-                  style={{ width: '100%', padding: '0.2rem 0.4rem', fontSize: '0.78rem' }}
+                  style={{ width: '100%', padding: '0.25rem 0.4rem', fontSize: '0.78rem' }}
+                  value={selectedTicket.assignedAgent || 'Unassigned'}
+                  onChange={(e) => handleAgentChange(selectedTicket.id, e.target.value)}
+                >
+                  {SUPPORT_AGENTS.map(agent => (
+                    <option key={agent} value={agent}>{agent}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <span style={{ color: 'var(--admin-text-muted)', display: 'block', fontSize: '0.74rem', marginBottom: '0.2rem' }}>Priority Level</span>
+                <select 
+                  className="filter-select"
+                  style={{ width: '100%', padding: '0.25rem 0.4rem', fontSize: '0.78rem' }}
+                  value={(selectedTicket.priority || 'medium').toString().toLowerCase()}
+                  onChange={(e) => handlePriorityChange(selectedTicket.id, e.target.value)}
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">⚡ Urgent</option>
+                </select>
+              </div>
+              <div>
+                <span style={{ color: 'var(--admin-text-muted)', display: 'block', fontSize: '0.74rem', marginBottom: '0.2rem' }}>Update Status</span>
+                <select 
+                  className="filter-select"
+                  style={{ width: '100%', padding: '0.25rem 0.4rem', fontSize: '0.78rem' }}
                   value={selectedTicket.status}
                   onChange={(e) => handleTicketStatusChange(selectedTicket.id, e.target.value)}
                 >

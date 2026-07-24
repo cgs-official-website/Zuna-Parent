@@ -286,14 +286,14 @@ export const ticketsService = {
     return tickets[idx];
   },
   
-  updateTicketStatus: async (id, status) => {
+  updateTicket: async (id, fieldsToUpdate) => {
     const tickets = getLocalTickets();
     const idx = tickets.findIndex(t => t.id === id);
     let targetCollection = 'tickets';
     let targetDocId = id;
 
     if (idx !== -1) {
-      tickets[idx].status = status;
+      Object.assign(tickets[idx], fieldsToUpdate);
       if (tickets[idx].sourceCollection) {
         targetCollection = tickets[idx].sourceCollection;
       }
@@ -306,12 +306,24 @@ export const ticketsService = {
       const colName = targetCollection === 'support_tickets' ? 'support_tickets' : 'tickets';
       const ticketRef = doc(db, colName, targetDocId);
       await updateDoc(ticketRef, {
-        status,
+        ...fieldsToUpdate,
         updatedAt: serverTimestamp()
       });
     } catch (err) {
-      console.warn('Firestore status update fallback:', err);
+      console.warn('Firestore update ticket fallback:', err);
     }
+  },
+
+  updateTicketStatus: async (id, status) => {
+    return ticketsService.updateTicket(id, { status });
+  },
+
+  updateTicketPriority: async (id, priority) => {
+    return ticketsService.updateTicket(id, { priority });
+  },
+
+  updateTicketAgent: async (id, assignedAgent) => {
+    return ticketsService.updateTicket(id, { assignedAgent });
   },
 
   deleteTicket: async (id) => {

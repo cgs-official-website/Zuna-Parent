@@ -9,7 +9,8 @@ const TicketRaiseForm = ({ products, initialProductId, initialProductName, onClo
     productId: initialProductId || '',
     productName: initialProductName || '',
     subject: '',
-    description: ''
+    description: '',
+    priority: 'medium'
   });
   const [ticketSuccess, setTicketSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -39,7 +40,7 @@ const TicketRaiseForm = ({ products, initialProductId, initialProductName, onClo
           name: ticketForm.name,
           email: ticketForm.email
         },
-        priority: 'medium' // default priority
+        priority: ticketForm.priority || 'medium'
       });
       setTicketSuccess(true);
     } catch (err) {
@@ -111,6 +112,19 @@ const TicketRaiseForm = ({ products, initialProductId, initialProductName, onClo
             {products.map(prod => (
               <option key={prod.id} value={prod.id}>{prod.name}</option>
             ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Priority Level</label>
+          <select 
+            className="form-select" 
+            value={ticketForm.priority}
+            onChange={(e) => setTicketForm(prev => ({ ...prev, priority: e.target.value }))}
+          >
+            <option value="low">Low Priority</option>
+            <option value="medium">Medium Priority</option>
+            <option value="high">High Priority</option>
+            <option value="urgent">Urgent Priority (Critical)</option>
           </select>
         </div>
         <div className="form-group">
