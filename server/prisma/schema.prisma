@@ -1,0 +1,247 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  SUPPORT_LEAD
+  SUPPORT_ENGINEER
+  PRODUCT_MANAGER
+}
+
+enum ProductTier {
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketSource {
+  PUBLIC_FORM
+  EXTERNAL_API
+  ADMIN
+}
+
+enum MessageSender {
+  CLIENT
+  ADMIN
+}
+
+enum DemoRequestStatus {
+  NEW
+  CONTACTED
+  SCHEDULED
+  COMPLETED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  TRIALING
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum NotificationType {
+  NEW_TICKET
+  TICKET_REPLY
+  NEW_DEMO_REQUEST
+  SLA_WARNING
+}
+
+model Admin {
+  id              String         @id @default(cuid())
+  name            String
+  email           String         @unique
+  passwordHash    String
+  role            AdminRole
+  avatarUrl       String?
+  isActive        Boolean        @default(true)
+  lastLoginAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  assignedTickets Ticket[]       @relation("AssignedAdminTickets")
+  notifications   Notification[]
+
+  @@index([role])
+  @@index([isActive])
+}
+
+model Product {
+  id            String         @id @default(cuid())
+  title         String
+  category      String
+  badgeColor    String?
+  description   String?
+  tier          ProductTier    @default(STARTER)
+  demoUrl       String?
+  iconKey       String?
+  featureTags   String[]       @default([])
+  isPublished   Boolean        @default(true)
+  sortOrder     Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  tickets       Ticket[]
+  demoRequests  DemoRequest[]
+  subscriptions Subscription[]
+  apiKeys       ApiKey[]
+
+  @@index([isPublished, sortOrder])
+}
+
+model Ticket {
+  id                  String          @id @default(cuid())
+  productId           String?
+  productNameSnapshot String?
+  clientName          String
+  clientEmail         String
+  subject             String
+  description         String
+  priority            TicketPriority  @default(MEDIUM)
+  status              TicketStatus    @default(OPEN)
+  source              TicketSource    @default(PUBLIC_FORM)
+  assignedAdminId     String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  product             Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  assignedAdmin       Admin?          @relation("AssignedAdminTickets", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  messages            TicketMessage[]
+
+  @@index([status, priority, productId])
+  @@index([clientEmail])
+  @@index([assignedAdminId])
+  @@index([createdAt])
+}
+
+model TicketMessage {
+  id         String        @id @default(cuid())
+  ticketId   String
+  sender     MessageSender
+  authorName String
+  text       String
+  createdAt  DateTime      @default(now())
+
+  ticket     Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+model DemoRequest {
+  id           String            @id @default(cuid())
+  productId    String?
+  companyName  String
+  contactName  String
+  contactEmail String
+  contactPhone String?
+  message      String?
+  status       DemoRequestStatus @default(NEW)
+  scheduledAt  DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  product      Product?          @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  clientCompanyName  String
+  productId          String
+  tier               ProductTier        @default(STARTER)
+  monthlyAmountPaise Int
+  status             SubscriptionStatus @default(TRIALING)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  product            Product            @relation(fields: [productId], references: [id], onDelete: Restrict)
+  invoices           Invoice[]
+
+  @@index([status])
+  @@index([productId])
+  @@index([currentPeriodEnd])
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  subscriptionId String
+  amountPaise    Int
+  status         InvoiceStatus @default(PENDING)
+  issuedAt       DateTime      @default(now())
+  dueAt          DateTime
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([subscriptionId])
+  @@index([dueAt])
+}
+
+model Notification {
+  id                  String           @id @default(cuid())
+  adminId             String?
+  type                NotificationType
+  payload             Json
+  isRead              Boolean          @default(false)
+  relatedTicketId     String?
+  relatedDemoRequestId String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  admin               Admin?           @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId, isRead])
+  @@index([createdAt])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  productId  String
+  keyHash    String    @unique
+  label      String
+  lastUsedAt DateTime?
+  isActive   Boolean   @default(true)
+  createdBy  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([keyHash])
+}
