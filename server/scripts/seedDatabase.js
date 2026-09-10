@@ -7,9 +7,8 @@ async function seed() {
 
   try {
     // 1. Seed Super Admin
-    const adminEmail = 'admin@zuna.com';
-    const adminPassword = 'Cgs@001a';
-    const passwordHash = await bcrypt.hash(adminPassword, 10);
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@zuna.com';
+    const passwordHash = process.env.ADMIN_PASSWORD_HASH || await bcrypt.hash(process.env.ADMIN_PASSWORD || 'Cgs@001a', 12);
 
     const admin = await prisma.admin.upsert({
       where: { email: adminEmail },
