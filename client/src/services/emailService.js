@@ -138,66 +138,73 @@ export const emailService = {
       return { success: false, error: 'No valid email address found for the selected team member.' };
     }
 
-    const apiKey = RESEND_API_KEY;
-    if (!apiKey) {
-      console.error('Resend API key missing in environment variables.');
-      return { success: false, error: 'Resend API key is not configured.' };
+    const ticketId = ticket.id;
+
+    // 1. Primary: Dispatch through Backend API via Nodemailer
+    if (ticketId) {
+      try {
+        const response = await fetch(`/api/tickets/${ticketId}/notify-agent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok && data.success) {
+          console.log(`✓ Email successfully dispatched via Nodemailer to ${agentEmail}`);
+          return {
+            success: true,
+            message: data.message,
+            provider: 'nodemailer',
+            recipient: agentEmail
+          };
+        } else if (data.error) {
+          const msg = typeof data.error === 'string' ? data.error : (data.error.message || JSON.stringify(data.error));
+          console.warn('Backend notification notice:', msg);
+          return { success: false, error: msg, recipient: agentEmail };
+        }
+      } catch (err) {
+        console.warn('Could not reach backend /notify-agent, attempting fallback...', err);
+      }
     }
 
-    const ticketId = ticket.id || 'N/A';
-    const subject = `[Assigned Ticket #${ticketId}] ${ticket.subject || 'Support Ticket'} - ${ticket.productName || 'Zuna'}`;
-    const html = generateTicketAssignmentEmailHtml({ ticket, agentName, agentEmail });
+    // 2. Fallback if Resend API key is provided
+    const apiKey = RESEND_API_KEY;
+    if (apiKey) {
+      const subject = `[Assigned Ticket #${ticketId || 'N/A'}] ${ticket.subject || 'Support Ticket'} - ${ticket.productName || 'Zuna'}`;
+      const html = generateTicketAssignmentEmailHtml({ ticket, agentName, agentEmail });
+      const fromSender = import.meta.env.VITE_RESEND_FROM_EMAIL || 'Zuna Support <onboarding@resend.dev>';
 
-    const fromSender = import.meta.env.VITE_RESEND_FROM_EMAIL || 'Zuna Support <onboarding@resend.dev>';
-    const payload = {
-      from: fromSender,
-      to: [agentEmail.trim()],
-      subject: subject,
-      html: html
-    };
-
-    // Try through Vite local proxy first to avoid any browser CORS issues
-    const endpoints = [
-      '/api/resend/emails',
-      'https://api.resend.com/emails'
-    ];
-
-    let lastError = null;
-
-    for (const url of endpoints) {
       try {
-        const response = await fetch(url, {
+        const response = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            from: fromSender,
+            to: [agentEmail.trim()],
+            subject,
+            html
+          })
         });
 
         const data = await response.json().catch(() => ({}));
-
         if (response.ok && data.id) {
-          console.log(`✓ Resend email successfully sent to ${agentEmail} (ID: ${data.id})`);
-          return { success: true, id: data.id, recipient: agentEmail };
-        } else {
-          const errMsg = data.message || data.error || `HTTP ${response.status}: ${response.statusText}`;
-          console.warn(`Resend request to ${url} failed:`, errMsg);
-          lastError = errMsg;
-          // If it was a 400 or 403 or specific validation error from Resend, don't retry same payload with second url
-          if (response.status === 400 || response.status === 403 || response.status === 422) {
-            return { success: false, error: errMsg, recipient: agentEmail };
-          }
+          return { success: true, id: data.id, recipient: agentEmail, provider: 'resend' };
         }
       } catch (err) {
-        console.warn(`Failed fetch to ${url}:`, err);
-        lastError = err.message || 'Network error';
+        console.warn('Resend direct fallback failed:', err);
       }
     }
 
-    return { 
-      success: false, 
-      error: lastError || 'Failed to dispatch email via Resend API.',
+    return {
+      success: false,
+      error: 'Backend Nodemailer is dispatching the notification. Check server logs.',
       recipient: agentEmail
     };
   }

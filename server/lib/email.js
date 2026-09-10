@@ -1,9 +1,115 @@
+import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { logger } from './logger.js';
 
+/**
+ * Configure Nodemailer SMTP Transporter dynamically from environment
+ */
+function createNodemailerTransporter() {
+  const smtpService = process.env.SMTP_SERVICE; // e.g. 'gmail'
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+
+  if (smtpService && smtpUser && smtpPass) {
+    logger.info({ service: smtpService, user: smtpUser }, 'Initialized Nodemailer using service provider');
+    return nodemailer.createTransport({
+      service: smtpService,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      }
+    });
+  }
+
+  if (smtpHost && smtpUser && smtpPass) {
+    logger.info({ host: smtpHost, port: smtpPort, user: smtpUser }, 'Initialized Nodemailer using custom SMTP host');
+    return nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: process.env.SMTP_SECURE === 'true' || smtpPort === 465,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      },
+      tls: {
+        rejectUnauthorized: process.env.SMTP_IGNORE_TLS === 'true' ? false : true
+      }
+    });
+  }
+
+  return null;
+}
+
+const transporter = createNodemailerTransporter();
+
+// Fallback to Resend if configured
 const resendApiKey = process.env.RESEND_API_KEY || '';
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
-const fromEmail = process.env.EMAIL_FROM || 'Zuna Support <onboarding@resend.dev>';
+
+const fromEmail =
+  process.env.EMAIL_FROM ||
+  process.env.SMTP_FROM ||
+  (process.env.SMTP_USER ? `Zuna Support <${process.env.SMTP_USER}>` : 'Zuna Support <notifications@zuna.carrezzaglobalsolutions.com>');
+
+/**
+ * Core email dispatcher with Nodemailer priority and Resend fallback
+ */
+async function dispatchEmail({ to, subject, html }) {
+  const recipient = Array.isArray(to) ? to[0] : to;
+
+  if (!recipient || !recipient.includes('@')) {
+    return { success: false, reason: 'Invalid recipient email' };
+  }
+
+  // 1. Try Nodemailer SMTP first
+  if (transporter) {
+    try {
+      const info = await transporter.sendMail({
+        from: fromEmail,
+        to: recipient,
+        subject,
+        html
+      });
+      logger.info({ messageId: info.messageId, recipient }, 'Email sent successfully via Nodemailer');
+      return { success: true, id: info.messageId, provider: 'nodemailer' };
+    } catch (err) {
+      logger.error({ error: err.message, recipient }, 'Nodemailer sendMail failed');
+      // If Resend is also configured, attempt fallback below
+      if (!resend) {
+        return { success: false, error: err.message, provider: 'nodemailer' };
+      }
+    }
+  }
+
+  // 2. Fallback to Resend if Nodemailer not configured or failed
+  if (resend) {
+    try {
+      const { data, error } = await resend.emails.send({
+        from: fromEmail,
+        to: [recipient],
+        subject,
+        html
+      });
+      if (error) {
+        logger.error({ error, recipient }, 'Failed to send email via Resend');
+        return { success: false, error, provider: 'resend' };
+      }
+      logger.info({ emailId: data.id, recipient }, 'Email sent successfully via Resend fallback');
+      return { success: true, id: data.id, provider: 'resend' };
+    } catch (err) {
+      logger.error(err, 'Resend dispatch exception');
+      return { success: false, error: err.message };
+    }
+  }
+
+  logger.warn(
+    { recipient },
+    'Neither Nodemailer nor Resend is configured. Set SMTP_USER & SMTP_PASS in .env to enable email sending.'
+  );
+  return { success: false, reason: 'No email transport configured' };
+}
 
 /**
  * Generate assignment notification email HTML
@@ -41,7 +147,7 @@ function generateTicketAssignmentEmailHtml({ ticket, agentName }) {
         Hello <strong>${agentName || 'Team Member'}</strong>,
       </p>
       <p style="margin: 0 0 24px; font-size: 14px; color: #94a3b8; line-height: 1.5;">
-        You have been assigned a new support ticket.
+        You have been assigned a new support ticket in the Zuna Central Admin portal.
       </p>
       <div style="background: #0f172a; border-radius: 12px; border: 1px solid #334155; padding: 20px; margin-bottom: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 14px; margin-bottom: 14px;">
@@ -56,7 +162,7 @@ function generateTicketAssignmentEmailHtml({ ticket, agentName }) {
           </div>
         </div>
         <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-          <tr><td style="padding: 6px 0; color: #94a3b8;">Product:</td><td style="padding: 6px 0; color: #f8fafc; font-weight: 600;">${productName}</td></tr>
+          <tr><td style="padding: 6px 0; color: #94a3b8; width: 100px;">Product:</td><td style="padding: 6px 0; color: #f8fafc; font-weight: 600;">${productName}</td></tr>
           <tr><td style="padding: 6px 0; color: #94a3b8;">Client:</td><td style="padding: 6px 0; color: #f8fafc; font-weight: 600;">${clientName} (${clientEmail})</td></tr>
           <tr><td style="padding: 6px 0; color: #94a3b8;">Status:</td><td style="padding: 6px 0; color: #10b981; font-weight: 700;">${status}</td></tr>
         </table>
@@ -69,7 +175,7 @@ function generateTicketAssignmentEmailHtml({ ticket, agentName }) {
       </div>
     </div>
     <div style="background: #0f172a; padding: 16px 24px; text-align: center; border-top: 1px solid #334155; font-size: 12px; color: #64748b;">
-      <p style="margin: 0;">Automated notification from Zuna Support Hub.</p>
+      <p style="margin: 0;">Automated notification via Nodemailer from Zuna Support Hub.</p>
     </div>
   </div>
 </body>
@@ -121,70 +227,41 @@ function generateClientReplyEmailHtml({ ticket, authorName, text }) {
 
 export const emailService = {
   /**
-   * Send ticket assignment email to admin
+   * Send ticket assignment email to admin member using Nodemailer
    */
   async sendTicketAssignmentEmail({ ticket, agentName, agentEmail }) {
-    if (!resend) {
-      logger.warn({ agentEmail }, 'Resend API key not configured. Skipping assignment email.');
-      return { success: false, reason: 'RESEND_API_KEY missing' };
-    }
-
-    if (!agentEmail || !agentEmail.includes('@')) {
-      return { success: false, reason: 'Invalid agent email' };
-    }
-
-    try {
-      const { data, error } = await resend.emails.send({
-        from: fromEmail,
-        to: [agentEmail],
-        subject: `[Assigned Ticket #${ticket.id}] ${ticket.subject}`,
-        html: generateTicketAssignmentEmailHtml({ ticket, agentName })
-      });
-
-      if (error) {
-        logger.error({ error, agentEmail }, 'Failed to send assignment email via Resend');
-        return { success: false, error };
-      }
-
-      logger.info({ emailId: data.id, agentEmail }, 'Assignment email dispatched successfully');
-      return { success: true, id: data.id };
-    } catch (err) {
-      logger.error(err, 'Resend dispatch exception');
-      return { success: false, error: err.message };
-    }
+    const subject = `[Assigned Ticket #${ticket.id}] ${ticket.subject}`;
+    const html = generateTicketAssignmentEmailHtml({ ticket, agentName });
+    return dispatchEmail({ to: agentEmail, subject, html });
   },
 
   /**
    * Send admin reply email to client
    */
   async sendClientReplyEmail({ ticket, clientEmail, authorName, text }) {
-    if (!resend) {
-      logger.warn({ clientEmail }, 'Resend API key not configured. Skipping reply email.');
-      return { success: false, reason: 'RESEND_API_KEY missing' };
-    }
+    const subject = `[Update] Ticket #${ticket.id}: ${ticket.subject}`;
+    const html = generateClientReplyEmailHtml({ ticket, authorName, text });
+    return dispatchEmail({ to: clientEmail, subject, html });
+  },
 
-    if (!clientEmail || !clientEmail.includes('@')) {
-      return { success: false, reason: 'Invalid client email' };
-    }
-
-    try {
-      const { data, error } = await resend.emails.send({
-        from: fromEmail,
-        to: [clientEmail],
-        subject: `[Update] Ticket #${ticket.id}: ${ticket.subject}`,
-        html: generateClientReplyEmailHtml({ ticket, authorName, text })
-      });
-
-      if (error) {
-        logger.error({ error, clientEmail }, 'Failed to send client reply email via Resend');
-        return { success: false, error };
-      }
-
-      logger.info({ emailId: data.id, clientEmail }, 'Client reply email dispatched successfully');
-      return { success: true, id: data.id };
-    } catch (err) {
-      logger.error(err, 'Resend reply dispatch exception');
-      return { success: false, error: err.message };
-    }
+  /**
+   * Send credentials email to newly invited team member
+   */
+  async sendTeamWelcomeEmail({ member, rawPassword }) {
+    const subject = 'Welcome to Zuna Support Team — Your Access Credentials';
+    const html = `
+      <div style="font-family: sans-serif; padding: 24px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <h2 style="color: #0284c7; margin-top: 0;">Hello ${member.name},</h2>
+        <p>You have been invited to the <strong>Zuna Central Support Admin Portal</strong> as a <strong>${(member.role || '').replace('_', ' ')}</strong>.</p>
+        <p>Your login credentials are:</p>
+        <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 16px 0;">
+          <p style="margin: 4px 0;"><strong>Portal URL:</strong> <a href="${process.env.FRONTEND_ORIGIN || 'http://localhost:5173'}/admin/login">Admin Login</a></p>
+          <p style="margin: 4px 0;"><strong>Email:</strong> ${member.email}</p>
+          <p style="margin: 4px 0;"><strong>Password:</strong> ${rawPassword}</p>
+        </div>
+        <p style="font-size: 13px; color: #64748b;">Please log in and update your password immediately.</p>
+      </div>
+    `;
+    return dispatchEmail({ to: member.email, subject, html });
   }
 };

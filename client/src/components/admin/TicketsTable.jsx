@@ -179,7 +179,7 @@ const TicketsTable = () => {
       // If assigned to a real agent with an email, send email via Resend
       if (newAgentName && newAgentName !== 'Unassigned' && agentEmail) {
         setEmailSendingStatus(prev => ({ ...prev, [ticketId]: true }));
-        showNotificationToast(`⏳ Assigning & dispatching Resend email to ${agentEmail}...`, 'info', 2500);
+        showNotificationToast(`⏳ Assigning & dispatching notification to ${agentEmail}...`, 'info', 2500);
 
         const emailResult = await emailService.sendTicketAssignmentEmail({
           ticket: { ...targetTicket, assignedAgent: newAgentName, assignedAgentEmail: agentEmail },
@@ -190,9 +190,10 @@ const TicketsTable = () => {
         setEmailSendingStatus(prev => ({ ...prev, [ticketId]: false }));
 
         if (emailResult.success) {
-          showNotificationToast(`✓ Ticket #${ticketId} assigned & email dispatched to ${agentEmail} via Resend!`, 'success', 5000);
+          const provider = emailResult.provider === 'nodemailer' ? 'Nodemailer' : 'Email';
+          showNotificationToast(`✓ Ticket #${ticketId} assigned & email dispatched to ${agentEmail} via ${provider}!`, 'success', 5000);
         } else {
-          showNotificationToast(`Ticket #${ticketId} assigned to ${newAgentName}. Resend alert: ${emailResult.error}`, 'warning', 6000);
+          showNotificationToast(`Ticket #${ticketId} assigned to ${newAgentName}. Email status: ${emailResult.error}`, 'warning', 6000);
         }
       } else if (newAgentName === 'Unassigned') {
         showNotificationToast(`Ticket #${ticketId} marked as Unassigned`, 'info', 3000);
@@ -218,7 +219,7 @@ const TicketsTable = () => {
     }
 
     setEmailSendingStatus(prev => ({ ...prev, [ticket.id]: true }));
-    showNotificationToast(`⏳ Sending ticket details to ${agentEmail} via Resend...`, 'info', 2500);
+    showNotificationToast(`⏳ Sending ticket details to ${agentEmail} via Nodemailer...`, 'info', 2500);
 
     const emailResult = await emailService.sendTicketAssignmentEmail({
       ticket: ticket,
@@ -229,9 +230,10 @@ const TicketsTable = () => {
     setEmailSendingStatus(prev => ({ ...prev, [ticket.id]: false }));
 
     if (emailResult.success) {
-      showNotificationToast(`✓ Resend email successfully sent to ${agentEmail}!`, 'success', 5000);
+      const provider = emailResult.provider === 'nodemailer' ? 'Nodemailer' : 'Email';
+      showNotificationToast(`✓ ${provider} email successfully sent to ${agentEmail}!`, 'success', 5000);
     } else {
-      showNotificationToast(`Resend dispatch notice: ${emailResult.error}`, 'warning', 6000);
+      showNotificationToast(`Email dispatch notice: ${emailResult.error}`, 'warning', 6000);
     }
   };
 

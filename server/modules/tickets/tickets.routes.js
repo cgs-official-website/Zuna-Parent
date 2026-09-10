@@ -12,5 +12,6 @@ router.get('/export', TicketsController.exportTickets);
 router.get('/:id', TicketsController.getTicketById);
 router.patch('/:id', TicketsController.updateTicket);
 router.post('/:id/messages', TicketsController.addMessage);
+router.post('/:id/notify-agent', TicketsController.notifyAgent);
 
 export default router;

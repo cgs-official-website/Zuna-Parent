@@ -1,11 +1,8 @@
 import bcrypt from 'bcrypt';
 import { prisma } from '../../lib/prisma.js';
 import { logger } from '../../lib/logger.js';
-import { Resend } from 'resend';
+import { emailService } from '../../lib/email.js';
 
-const resendApiKey = process.env.RESEND_API_KEY || '';
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
-const fromEmail = process.env.EMAIL_FROM || 'Zuna Support <onboarding@resend.dev>';
 
 export class TeamService {
   /**
@@ -102,28 +99,12 @@ export class TeamService {
       }
     });
 
-    // Send credentials email via Resend if configured
-    if (resend) {
-      resend.emails.send({
-        from: fromEmail,
-        to: [member.email],
-        subject: 'Welcome to Zuna Support Team — Your Access Credentials',
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
-            <h2>Hello ${member.name},</h2>
-            <p>You have been invited to the <strong>Zuna Central Support Admin Portal</strong> as a <strong>${member.role.replace('_', ' ')}</strong>.</p>
-            <p>Your temporary login credentials are:</p>
-            <ul>
-              <li><strong>Email:</strong> ${member.email}</li>
-              <li><strong>Password:</strong> ${data.password}</li>
-            </ul>
-            <p>Please log in and update your password immediately.</p>
-          </div>
-        `
-      }).catch((err) => {
+    // Send credentials email via Nodemailer / Resend
+    emailService
+      .sendTeamWelcomeEmail({ member, rawPassword: data.password })
+      .catch((err) => {
         logger.warn({ err: err.message }, 'Could not send team welcome email');
       });
-    }
 
     logger.info({ memberId: member.id, email: member.email, creator: creatorAdmin?.email }, 'New admin staff created');
     return member;

@@ -1,4 +1,5 @@
 import { TicketsService } from './tickets.service.js';
+import { emailService } from '../../lib/email.js';
 import {
   listTicketsQuerySchema,
   updateTicketSchema,
@@ -96,6 +97,35 @@ export class TicketsController {
           error: { message: 'Validation error', details: error.errors }
         });
       }
+      next(error);
+    }
+  }
+
+  static async notifyAgent(req, res, next) {
+    try {
+      const { id } = req.params;
+      const ticket = await TicketsService.getTicketById(id);
+      if (!ticket.assignedAdmin || !ticket.assignedAdmin.email) {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Ticket does not have an assigned team member with an email address.' }
+        });
+      }
+
+      const result = await emailService.sendTicketAssignmentEmail({
+        ticket,
+        agentName: ticket.assignedAdmin.name,
+        agentEmail: ticket.assignedAdmin.email
+      });
+
+      return res.status(200).json({
+        success: result.success,
+        message: result.success
+          ? `Assignment notification email dispatched to ${ticket.assignedAdmin.email} via ${result.provider || 'Nodemailer'}`
+          : `Failed to send email: ${result.error || result.reason}`,
+        details: result
+      });
+    } catch (error) {
       next(error);
     }
   }
