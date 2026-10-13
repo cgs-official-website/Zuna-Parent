@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import * as Icons from 'lucide-react';
+import { FiRefreshCw } from 'react-icons/fi';
 
 export const RefreshButton = ({
   onRefresh,
@@ -42,7 +42,7 @@ export const RefreshButton = ({
       }}
       aria-label={buttonLabel}
     >
-      <Icons.RotateCw
+      <FiRefreshCw
         size={15}
         className={isLoading ? 'spin-refresh-icon' : ''}
         style={{ color: 'var(--accent)' }}

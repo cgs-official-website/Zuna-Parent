@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
     --primary: #0A0F1D; /* Extremely Deep Space Blue */
@@ -24,8 +24,8 @@
     --shadow-lg: 0 24px 60px rgba(10, 15, 29, 0.08);
     
     --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    --font-heading: 'Manrope', sans-serif;
-    --font-body: 'Inter', sans-serif;
+    --font-heading: 'Poppins', sans-serif;
+    --font-body: 'Poppins', sans-serif;
 }
 
 * {

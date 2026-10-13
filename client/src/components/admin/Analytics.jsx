@@ -1,287 +1,245 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import * as Icons from 'lucide-react';
-import { productsService } from '../../services/productsService';
-import { exportToExcel, exportToPDF } from '../../services/exportService';
-import Skeleton from '../common/Skeleton';
+import React, { useState } from 'react';
+import { FiBarChart2, FiClock, FiCheckCircle, FiTrendingUp, FiUser, FiActivity } from 'react-icons/fi';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid
+} from 'recharts';
+import { useAnalytics } from '../../hooks/useAnalytics.js';
+import { useTheme } from '../../context/ThemeContext.jsx';
+import { CardSkeleton } from '../common/Skeleton.jsx';
 
-const Analytics = () => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState('30d');
-  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
-  const [downloadSuccessToast, setDownloadSuccessToast] = useState('');
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const exportRef = useRef(null);
+export const Analytics = () => {
+  const [range, setRange] = useState('30d');
+  const { kpis, volume, performance, loading } = useAnalytics(range);
+  const { isDark } = useTheme();
 
-  const fetchAnalyticsData = async () => {
-    setLoading(true);
-    try {
-      const pData = await productsService.getProducts();
-      setProducts(pData);
-    } catch (err) {
-      console.error('Error fetching analytics data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAnalyticsData();
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (exportRef.current && !exportRef.current.contains(e.target)) {
-        setExportDropdownOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Compute metrics dynamically from database products
-  const productPerformance = products.map((p, idx) => {
-    const rawMrr = parseFloat(p.monthlyRevenue || p.mrr || p.price || 0);
-    const activeTenants = parseInt(p.activeClients || p.clients || p.tenants || 0, 10);
-
-    return {
-      id: p.id || `PRD-0${idx + 1}`,
-      name: p.name || p.title || 'SaaS Product',
-      rawMrr,
-      mrr: `₹${rawMrr.toLocaleString()}`,
-      activeTenants,
-      growth: p.growth || '0%',
-      churn: p.churn || '0%',
-      color: p.color || '#0084FF'
-    };
-  });
-
-  const totalMrr = productPerformance.reduce((acc, p) => acc + p.rawMrr, 0);
-  const totalTenants = productPerformance.reduce((acc, p) => acc + p.activeTenants, 0);
-  const arpu = totalTenants > 0 ? Math.round(totalMrr / totalTenants) : 0;
-
-  const handleDownloadExcel = () => {
-    const exportData = productPerformance.map(p => ({
-      'Product Code': p.id,
-      'Product Name': p.name,
-      'Monthly Revenue (MRR)': p.mrr,
-      'Active Tenant Clients': p.activeTenants,
-      'MoM Growth Rate': p.growth,
-      'Churn Rate': p.churn
-    }));
-
-    exportToExcel(exportData, null, `Zuna_Financial_Analytics_${selectedTimeframe}`);
-    setExportDropdownOpen(false);
-    setDownloadSuccessToast('✓ Excel Report Downloaded!');
-    setTimeout(() => setDownloadSuccessToast(''), 3000);
-  };
-
-  const handleDownloadPDF = () => {
-    const headers = ['Product Code', 'Product Name', 'MRR (₹)', 'Active Tenants', 'Growth', 'Churn'];
-    const rows = productPerformance.map(p => [
-      p.id,
-      p.name,
-      p.mrr,
-      `${p.activeTenants} Clients`,
-      p.growth,
-      p.churn
-    ]);
-
-    exportToPDF(`SaaS Analytics & Revenue Report (${selectedTimeframe})`, headers, rows, `Zuna_Analytics_${selectedTimeframe}`);
-    setExportDropdownOpen(false);
-    setDownloadSuccessToast('✓ PDF Document Generated!');
-    setTimeout(() => setDownloadSuccessToast(''), 3000);
-  };
+  const accentColor = isDark ? '#FFD60A' : '#FFC300';
+  const textColor = isDark ? '#A1A1AA' : '#64748B';
 
   return (
-    <div className="admin-overview-container">
-      {/* Header Bar */}
-      <div className="panel-header" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="admin-container">
+      {/* Header */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 'var(--space-4)',
+          marginBottom: 'var(--space-6)'
+        }}
+      >
         <div>
-          <h2 className="panel-title" style={{ fontSize: '1.4rem', margin: 0, color: 'var(--admin-text-main)' }}>Analytics & Financial Reports</h2>
-          <p style={{ margin: '0.2rem 0 0', fontSize: '0.84rem', color: 'var(--admin-text-muted)' }}>
-            Real-time SaaS product revenue performance, tenant active metrics, and financial breakdown.
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '4px' }}>Deep Analytics & SLA Compliance</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            System-wide incident volume trends, resolution rates, and staff benchmarks.
           </p>
         </div>
 
-        <div className="panel-actions" style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          {downloadSuccessToast && (
-            <span style={{ background: '#00F5D4', color: '#0f172a', padding: '0.35rem 0.85rem', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 700 }}>
-              {downloadSuccessToast}
-            </span>
-          )}
-
-          {/* Timeframe Selector */}
-          <select 
-            className="filter-select"
-            value={selectedTimeframe}
-            onChange={(e) => setSelectedTimeframe(e.target.value)}
-          >
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Quarter to Date (Q3)</option>
-            <option value="1y">Year to Date</option>
-          </select>
-
-          {/* Download Options Dropdown */}
-          <div className="navbar-dropdown-wrapper" ref={exportRef}>
-            <button 
-              className="btn btn-primary" 
-              onClick={() => setExportDropdownOpen(!exportDropdownOpen)} 
-              disabled={products.length === 0}
-              style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', height: '38px' }}
+        {/* Range Selector */}
+        <div
+          style={{
+            display: 'flex',
+            background: 'var(--surface-2)',
+            padding: '3px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--border)'
+          }}
+        >
+          {['7d', '30d', '90d'].map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                borderRadius: 'var(--radius-xs)',
+                background: range === r ? 'var(--accent)' : 'transparent',
+                color: range === r ? 'var(--accent-contrast)' : 'var(--text-secondary)'
+              }}
             >
-              <Icons.Download size={15} />
-              <span>Export Reports</span>
-              <Icons.ChevronDown size={14} style={{ transform: exportDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+              Last {r.toUpperCase()}
             </button>
+          ))}
+        </div>
+      </div>
 
-            {exportDropdownOpen && (
-              <div className="navbar-dropdown-panel" style={{ width: '220px', top: 'calc(100% + 0.4rem)', right: 0 }}>
-                <div className="dropdown-header">Choose Download Format</div>
-                <div className="user-dropdown-menu">
-                  <button className="dropdown-item" onClick={handleDownloadExcel}>
-                    <Icons.FileSpreadsheet size={16} style={{ color: '#10b981' }} />
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: 600 }}>Download Excel</span>
-                      <small style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted)' }}>Spreadsheet (.xlsx / .csv)</small>
-                    </div>
-                  </button>
-
-                  <button className="dropdown-item" onClick={handleDownloadPDF}>
-                    <Icons.FileText size={16} style={{ color: '#ef4444' }} />
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: 600 }}>Download PDF</span>
-                      <small style={{ fontSize: '0.72rem', color: 'var(--admin-text-muted)' }}>Printable PDF Document</small>
-                    </div>
-                  </button>
-                </div>
+      {/* SLA Metric Cards */}
+      {loading && !kpis ? (
+        <CardSkeleton count={3} />
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 'var(--space-4)',
+            marginBottom: 'var(--space-6)'
+          }}
+        >
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--success-bg)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--success)'
+              }}
+            >
+              <FiCheckCircle size={24} />
+            </div>
+            <div>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>SLA Compliance Rate</span>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>
+                {kpis?.slaComplianceRate ? `${kpis.slaComplianceRate}%` : 'N/A'}
               </div>
-            )}
+              <span style={{ fontSize: '0.75rem', color: 'var(--success)' }}>
+                {kpis?.slaTarget ? `Target: ${kpis.slaTarget}%` : 'Standard SLA: 95%'}
+              </span>
+            </div>
           </div>
+
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--accent-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--accent)'
+              }}
+            >
+              <FiClock size={24} />
+            </div>
+            <div>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Mean Time to Resolve</span>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>
+                {kpis?.avgResolutionHours ? `${kpis.avgResolutionHours} hrs` : '0 hrs'}
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                {kpis?.sampleSize ? `Based on ${kpis.sampleSize} tickets` : 'No resolved tickets'}
+              </span>
+            </div>
+          </div>
+
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--info-bg)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--info)'
+              }}
+            >
+              <FiActivity size={24} />
+            </div>
+            <div>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>First Contact Resolution</span>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>
+                {kpis?.firstContactResolution ? `${kpis.firstContactResolution}%` : 'N/A'}
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target: 80%+</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ticket Velocity Chart */}
+      <div className="card" style={{ minHeight: '380px', marginBottom: 'var(--space-6)', display: 'flex', flexDirection: 'column' }}>
+        <h3 style={{ fontSize: '1.0625rem', marginBottom: '4px' }}>Incident Ingestion Velocity</h3>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
+          Daily ticket generation across all integrated SaaS verticals
+        </p>
+
+        <div style={{ flex: 1, minHeight: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {volume && volume.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={volume}>
+                <defs>
+                  <linearGradient id="analyticsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={accentColor} stopOpacity={0.4} />
+                    <stop offset="95%" stopColor={accentColor} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" stroke={textColor} fontSize={12} tickLine={false} />
+                <YAxis stroke={textColor} fontSize={12} tickLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    background: 'var(--surface-overlay)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text)'
+                  }}
+                />
+                <Area type="monotone" dataKey="tickets" stroke={accentColor} strokeWidth={2.5} fill="url(#analyticsGradient)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+              <FiActivity size={32} style={{ opacity: 0.3, marginBottom: '8px' }} />
+              <p>No ticket velocity data recorded for this range.</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* KPI Cards Row */}
-      <div className="admin-stats-grid">
-        <div className="admin-stat-card">
-          <div className="stat-card-header">
-            <div className="unified-admin-icon" style={{ background: 'rgba(0, 132, 255, 0.12)', color: 'var(--accent)' }}>
-              <Icons.IndianRupee size={22} />
-            </div>
-          </div>
-          <div className="stat-card-body">
-            <span className="stat-value">₹{totalMrr.toLocaleString()}</span>
-            <span className="stat-label">Total Monthly Recurring Revenue (MRR)</span>
-            <span className="stat-subtext">Across {products.length} Active Database Products</span>
-          </div>
+      {/* Staff Resolution Leaderboard */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: 'var(--space-4) var(--space-6)', borderBottom: '1px solid var(--border)' }}>
+          <h3 style={{ fontSize: '1rem', margin: 0 }}>Support Engineer Performance</h3>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0 }}>
+            Incident resolution counts and average response latency
+          </p>
         </div>
 
-        <div className="admin-stat-card">
-          <div className="stat-card-header">
-            <div className="unified-admin-icon" style={{ background: 'rgba(0, 245, 212, 0.12)', color: '#00F5D4' }}>
-              <Icons.TrendingUp size={22} />
-            </div>
-          </div>
-          <div className="stat-card-body">
-            <span className="stat-value">₹{arpu.toLocaleString()}</span>
-            <span className="stat-label">Average Revenue Per User (ARPU)</span>
-            <span className="stat-subtext">Calculated from registered tenant licenses</span>
-          </div>
-        </div>
-
-        <div className="admin-stat-card">
-          <div className="stat-card-header">
-            <div className="unified-admin-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
-              <Icons.ShieldCheck size={22} />
-            </div>
-          </div>
-          <div className="stat-card-body">
-            <span className="stat-value">{totalTenants > 0 ? '100%' : 'N/A'}</span>
-            <span className="stat-label">Active Tenant Retention</span>
-            <span className="stat-subtext">Database registered products</span>
-          </div>
-        </div>
-
-        <div className="admin-stat-card">
-          <div className="stat-card-header">
-            <div className="unified-admin-icon" style={{ background: 'rgba(99, 102, 241, 0.12)', color: '#6366f1' }}>
-              <Icons.Layers size={22} />
-            </div>
-          </div>
-          <div className="stat-card-body">
-            <span className="stat-value">{totalTenants.toLocaleString()}</span>
-            <span className="stat-label">Total Active Paid Licenses</span>
-            <span className="stat-subtext">Active client subscriptions in database</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Multi-Product Performance Table / Empty State */}
-      <div className="admin-panel" style={{ marginTop: '1.75rem' }}>
-        <div className="panel-header" style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--admin-border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div className="unified-admin-icon sm" style={{ background: 'rgba(0, 132, 255, 0.12)', color: 'var(--accent)' }}>
-              <Icons.BarChart2 size={18} />
-            </div>
-            <span className="panel-title" style={{ fontSize: '1.15rem' }}>Product-wise Financial Metrics</span>
-          </div>
-        </div>
-
-        {loading ? (
-          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {[1, 2, 3].map(idx => (
-              <Skeleton key={idx} width="100%" height="45px" borderRadius="8px" />
-            ))}
-          </div>
-        ) : productPerformance.length === 0 ? (
-          <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center', color: 'var(--admin-text-muted)' }}>
-            <Icons.PieChart size={44} style={{ opacity: 0.3, margin: '0 auto 1rem', display: 'block' }} />
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 0.4rem', color: 'var(--admin-text-main)' }}>No Analytics Data Found</h3>
-            <p style={{ fontSize: '0.85rem', margin: '0 0 1.5rem', color: 'var(--admin-text-muted)', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
-              No products or active subscription records exist in your database yet. Add SaaS products in the Product Manager to generate financial reports.
-            </p>
-            <Link to="/admin/dashboard/products" className="btn btn-primary" style={{ padding: '0.55rem 1.2rem', fontSize: '0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Icons.Plus size={16} /> Manage Products
-            </Link>
-          </div>
-        ) : (
-          <div className="admin-table-container">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th style={{ minWidth: '200px' }}>Product Module</th>
-                  <th style={{ width: '150px' }}>Monthly Revenue</th>
-                  <th style={{ width: '130px' }}>MoM Growth</th>
-                  <th style={{ width: '160px' }}>Active Tenant Count</th>
-                  <th style={{ width: '120px' }}>Churn Rate</th>
-                  <th style={{ textAlign: 'center', width: '180px', minWidth: '180px' }}>Performance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {productPerformance.map((prod, i) => (
-                  <tr key={i}>
-                    <td style={{ fontWeight: 700, color: 'var(--admin-text-main)', whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: prod.color }} />
-                        <span>{prod.name}</span>
-                      </div>
-                    </td>
-                    <td style={{ fontWeight: 700, color: 'var(--admin-text-main)', whiteSpace: 'nowrap' }}>{prod.mrr}</td>
-                    <td style={{ color: '#10b981', fontWeight: 700, whiteSpace: 'nowrap' }}>{prod.growth}</td>
-                    <td style={{ fontWeight: 600, color: 'var(--admin-text-main)', whiteSpace: 'nowrap' }}>{prod.activeTenants.toLocaleString()} Tenants</td>
-                    <td style={{ color: 'var(--admin-text-muted)', whiteSpace: 'nowrap' }}>{prod.churn}</td>
-                    <td style={{ textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap', width: '180px' }}>
-                      <span className="badge-performance badge-performance-green" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem 0.85rem', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '50px', fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                        Active
-                      </span>
-                    </td>
+        <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Engineer</th>
+                <th>Resolved Tickets</th>
+                <th>Average Resolution</th>
+                <th>Satisfaction Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {performance && performance.length > 0 ? (
+                performance.map((staff, idx) => (
+                  <tr key={idx}>
+                    <td style={{ fontWeight: 600 }}>{staff.name || 'Staff Member'}</td>
+                    <td style={{ fontWeight: 700, color: 'var(--accent)' }}>{staff.resolvedCount ?? 0}</td>
+                    <td>{staff.avgTime || '0 hrs'}</td>
+                    <td style={{ color: 'var(--success)', fontWeight: 600 }}>{staff.csat ? `${staff.csat} / 5.0` : 'N/A'}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--text-muted)' }}>
+                    No staff resolution data recorded yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

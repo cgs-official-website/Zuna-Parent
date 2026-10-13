@@ -1,7 +1,38 @@
 import { TeamService } from './team.service.js';
-import { createMemberSchema, updateMemberSchema } from './team.validator.js';
+import { createMemberSchema, updateMemberSchema, createRoleSchema } from './team.validator.js';
 
 export class TeamController {
+  static async listRoles(req, res, next) {
+    try {
+      const roles = await TeamService.listRoles();
+      return res.status(200).json({
+        success: true,
+        data: roles
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async createRole(req, res, next) {
+    try {
+      const validated = createRoleSchema.parse(req.body);
+      const role = await TeamService.createRole(validated);
+      return res.status(201).json({
+        success: true,
+        data: role
+      });
+    } catch (error) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({
+          success: false,
+          error: { message: 'Validation failed', details: error.errors }
+        });
+      }
+      next(error);
+    }
+  }
+
   static async listTeamMembers(req, res, next) {
     try {
       const members = await TeamService.listTeamMembers();

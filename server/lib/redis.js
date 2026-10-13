@@ -7,8 +7,11 @@ export const redis = new Redis(redisUrl, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   retryStrategy(times) {
-    const delay = Math.min(times * 100, 3000);
-    return delay;
+    if (times > 3) {
+      logger.info('Redis unavailable locally — switched to fast in-memory fallback stores');
+      return null;
+    }
+    return Math.min(times * 150, 1000);
   },
   lazyConnect: true
 });

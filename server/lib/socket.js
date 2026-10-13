@@ -20,7 +20,8 @@ export function initSocket(httpServer) {
   io = new Server(httpServer, {
     cors: {
       origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || isLocalhost) {
           callback(null, true);
         } else {
           callback(new Error(`Origin ${origin} not allowed by Socket.io CORS`));
@@ -36,9 +37,16 @@ export function initSocket(httpServer) {
   try {
     const pubClient = new Redis(redisUrl, {
       maxRetriesPerRequest: null,
-      lazyConnect: true
+      lazyConnect: true,
+      retryStrategy(times) {
+        if (times > 2) return null;
+        return 500;
+      }
     });
+    pubClient.on('error', () => {}); // Catch error to prevent unhandled EventEmitter error
+
     const subClient = pubClient.duplicate();
+    subClient.on('error', () => {}); // Catch error to prevent unhandled EventEmitter error
 
     pubClient.connect().then(() => {
       subClient.connect().then(() => {
@@ -46,10 +54,10 @@ export function initSocket(httpServer) {
         logger.info('Socket.io Redis adapter attached successfully');
       });
     }).catch((err) => {
-      logger.warn({ err: err.message }, 'Socket.io running in standalone mode (Redis adapter unavailable)');
+      logger.info({ err: err.message }, 'Socket.io running in standalone mode (Redis adapter unavailable)');
     });
   } catch (err) {
-    logger.warn({ err: err.message }, 'Socket.io running in standalone mode (Redis adapter init error)');
+    logger.info({ err: err.message }, 'Socket.io running in standalone mode (Redis adapter init error)');
   }
 
   // Define /admin namespace

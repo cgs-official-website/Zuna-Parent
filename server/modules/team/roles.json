@@ -1,0 +1,38 @@
+[
+  {
+    "id": "SUPER_ADMIN",
+    "name": "Super Admin",
+    "description": "Full access to all system settings, staff management, and billing.",
+    "baseRole": "SUPER_ADMIN",
+    "isSystem": true
+  },
+  {
+    "id": "SUPPORT_LEAD",
+    "name": "Support Lead",
+    "description": "Supervises support engineers, assigns tickets, and handles escalations.",
+    "baseRole": "SUPPORT_LEAD",
+    "isSystem": true
+  },
+  {
+    "id": "SUPPORT_ENGINEER",
+    "name": "Support Engineer",
+    "description": "Resolves customer support tickets, replies to clients, and updates ticket status.",
+    "baseRole": "SUPPORT_ENGINEER",
+    "isSystem": true
+  },
+  {
+    "id": "PRODUCT_MANAGER",
+    "name": "Product Manager",
+    "description": "Manages product catalog, tier configurations, and views analytics.",
+    "baseRole": "PRODUCT_MANAGER",
+    "isSystem": true
+  },
+  {
+    "id": "ROLE_DEVELOPER",
+    "name": "Developer",
+    "description": "",
+    "baseRole": "SUPPORT_ENGINEER",
+    "isSystem": false,
+    "createdAt": "2026-10-13T09:10:38.570Z"
+  }
+]

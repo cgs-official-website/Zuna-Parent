@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import * as Icons from 'lucide-react';
+import { FiLifeBuoy } from 'react-icons/fi';
 import { ticketsService } from '../../services/ticketsService';
 
 const TicketRaiseForm = ({ products, initialProductId, initialProductName, onClose }) => {
@@ -54,8 +54,8 @@ const TicketRaiseForm = ({ products, initialProductId, initialProductName, onClo
   if (ticketSuccess) {
     return (
       <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-        <div style={{ width: '64px', height: '64px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6', marginBottom: '1.5rem' }}>
-          <Icons.LifeBuoy size={32} style={{ strokeWidth: 2.5 }} />
+        <div style={{ width: '64px', height: '64px', background: 'rgba(255, 195, 0, 0.12)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', marginBottom: '1.5rem' }}>
+          <FiLifeBuoy size={32} />
         </div>
         <h3 style={{ fontSize: '1.75rem', marginBottom: '0.75rem', color: 'var(--primary)' }}>Support Ticket Raised!</h3>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '2rem', maxWidth: '340px', marginLeft: 'auto', marginRight: 'auto' }}>

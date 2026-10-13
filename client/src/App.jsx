@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext.jsx';
+import { ToastProvider } from './context/ToastContext.jsx';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { SocketProvider } from './context/SocketContext.jsx';
 import LandingPage from './components/public/LandingPage';
 import LoginForm from './components/admin/LoginForm';
 import DashboardLayout from './components/admin/DashboardLayout';
@@ -13,33 +17,19 @@ import BillingManager from './components/admin/BillingManager';
 import Settings from './components/admin/Settings';
 import HelpSupport from './components/admin/HelpSupport';
 import AdminRoute from './routes/AdminRoute';
-import { auth } from './services/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
 
-function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  if (loading) {
-    return null;
-  }
+function AppRoutes() {
+  const { isAuthenticated } = useAuth();
 
   return (
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
-      
+
       {/* Admin Login */}
-      <Route path="/admin" element={<LoginForm isAuthenticated={!!user} />} />
-      
+      <Route path="/admin" element={<LoginForm isAuthenticated={isAuthenticated} />} />
+      <Route path="/admin/login" element={<Navigate to="/admin" replace />} />
+
       {/* Protected Admin Dashboard */}
       <Route path="/admin/dashboard" element={<AdminRoute />}>
         <Route element={<DashboardLayout />}>
@@ -59,6 +49,20 @@ function App() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <SocketProvider>
+            <AppRoutes />
+          </SocketProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 

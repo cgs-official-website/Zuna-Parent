@@ -1,186 +1,131 @@
-import React, { useState } from 'react';
-import { productsService } from '../../services/productsService';
+import React, { useState, useEffect } from 'react';
 
-const availableIcons = [
-  'Users', 'GraduationCap', 'Utensils', 'BookOpen', 'Receipt', 
-  'Briefcase', 'Layers', 'Shield', 'Sparkles', 'PhoneCall', 
-  'Activity', 'HelpCircle', 'Laptop', 'TrendingUp', 'HeartHandshake'
-];
+export const ProductForm = ({ product, onSubmit, onCancel, loading }) => {
+  const [title, setTitle] = useState(product?.title || '');
+  const [category, setCategory] = useState(product?.category || 'HRMS');
+  const [badge, setBadge] = useState(product?.badge || '');
+  const [description, setDescription] = useState(product?.description || '');
+  const [tier, setTier] = useState(product?.tier || 'PRO');
+  const [demoUrl, setDemoUrl] = useState(product?.demoUrl || '');
 
-const ProductForm = ({ editingProduct, onClose, onRefresh }) => {
-  const [productForm, setProductForm] = useState({
-    name: editingProduct ? editingProduct.name : '',
-    description: editingProduct ? editingProduct.description : '',
-    targetAudience: editingProduct ? (editingProduct.targetAudience || '') : '',
-    productUrl: editingProduct ? (editingProduct.productUrl || editingProduct.url || '') : '',
-    icon: editingProduct ? (editingProduct.icon || 'Layers') : 'Layers',
-    features: editingProduct ? (editingProduct.features || '') : '',
-    status: editingProduct ? (editingProduct.status || 'Active') : 'Active'
-  });
-  const [urlError, setUrlError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const validateUrl = (urlStr) => {
-    if (!urlStr || urlStr.trim() === '') return true; // Optional field
-    const trimmed = urlStr.trim();
-    if (!/^https?:\/\//i.test(trimmed)) return false;
-    try {
-      new URL(trimmed);
-      return true;
-    } catch (_) {
-      return false;
+  useEffect(() => {
+    if (product) {
+      setTitle(product.title || '');
+      setCategory(product.category || 'HRMS');
+      setBadge(product.badge || '');
+      setDescription(product.description || '');
+      setTier(product.tier || 'PRO');
+      setDemoUrl(product.demoUrl || '');
     }
-  };
+  }, [product]);
 
-  const handleProductSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setUrlError('');
+    if (!title.trim()) return;
 
-    if (productForm.productUrl && !validateUrl(productForm.productUrl)) {
-      setUrlError('Please enter a valid URL starting with http:// or https:// (e.g. https://example.com/hrms)');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const dataToSave = {
-        ...productForm,
-        url: productForm.productUrl || '#products',
-        isCustomStatus: true
-      };
-
-      if (editingProduct) {
-        await productsService.updateProduct(editingProduct.id, dataToSave);
-      } else {
-        await productsService.addProduct(dataToSave);
-      }
-      onRefresh();
-      onClose();
-    } catch (err) {
-      console.error('Error saving product:', err);
-      alert('Failed to save product. Make sure you are an admin.');
-    } finally {
-      setLoading(false);
-    }
+    onSubmit({
+      title: title.trim(),
+      category,
+      badge: badge.trim(),
+      description: description.trim(),
+      tier,
+      demoUrl: demoUrl.trim()
+    });
   };
 
   return (
-    <div className="admin-modal-overlay" onClick={onClose} style={{ animation: 'fadeIn 0.3s ease' }}>
-      <div className="admin-modal" onClick={(e) => e.stopPropagation()} style={{ animation: 'modalSlideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
-        <div className="admin-modal-header">
-          <h3 className="admin-modal-title">{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
-          <button className="admin-modal-close btn-interactive" onClick={onClose}>&times;</button>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      <div>
+        <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+          Product Title
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="e.g. Clinic Management System"
+          required
+          className="input-field"
+        />
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+            Category Vertical
+          </label>
+          <select value={category} onChange={(e) => setCategory(e.target.value)} className="input-field">
+            <option value="HRMS">HRMS (Attendance)</option>
+            <option value="CLINIC">Clinic MS</option>
+            <option value="SCHOOL">School MS</option>
+            <option value="COLLEGE">College MS</option>
+            <option value="HOSPITAL">Hospital MS</option>
+            <option value="GENERAL">General Support</option>
+          </select>
         </div>
 
-        <form onSubmit={handleProductSubmit}>
-          <div className="admin-input-group admin-cascade-item" style={{ animationDelay: '0.05s' }}>
-            <label>Product Name *</label>
-            <input 
-              type="text" 
-              className="admin-input" 
-              value={productForm.name}
-              onChange={(e) => setProductForm(prev => ({ ...prev, name: e.target.value }))}
-              required 
-            />
-          </div>
-
-          <div className="admin-input-group admin-cascade-item" style={{ animationDelay: '0.1s' }}>
-            <label>Description *</label>
-            <textarea 
-              className="admin-textarea" 
-              value={productForm.description}
-              onChange={(e) => setProductForm(prev => ({ ...prev, description: e.target.value }))}
-              required 
-            />
-          </div>
-
-          <div className="admin-input-group admin-cascade-item" style={{ animationDelay: '0.15s' }}>
-            <label>Target Audience</label>
-            <input 
-              type="text" 
-              className="admin-input" 
-              placeholder="e.g. HR Managers & Enterprise Business"
-              value={productForm.targetAudience}
-              onChange={(e) => setProductForm(prev => ({ ...prev, targetAudience: e.target.value }))}
-            />
-          </div>
-
-          <div className="admin-input-group admin-cascade-item" style={{ animationDelay: '0.2s' }}>
-            <label>Product URL <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>(Optional)</span></label>
-            <input 
-              type="text" 
-              className="admin-input" 
-              placeholder="https://example.com/hrms"
-              maxLength={500}
-              value={productForm.productUrl}
-              onChange={(e) => {
-                setProductForm(prev => ({ ...prev, productUrl: e.target.value }));
-                if (urlError) setUrlError('');
-              }}
-              style={urlError ? { borderColor: '#ef4444' } : {}}
-            />
-            <small style={{ display: 'block', marginTop: '0.35rem', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-              Enter the product's website or documentation URL
-            </small>
-            {urlError && (
-              <span style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
-                {urlError}
-              </span>
-            )}
-          </div>
-
-          <div className="admin-form-grid admin-cascade-item" style={{ animationDelay: '0.25s' }}>
-            <div className="admin-input-group">
-              <label>Product Icon</label>
-              <select 
-                className="admin-input"
-                value={productForm.icon}
-                onChange={(e) => setProductForm(prev => ({ ...prev, icon: e.target.value }))}
-              >
-                {availableIcons.map(icon => (
-                  <option key={icon} value={icon}>{icon}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="admin-input-group">
-              <label>Status</label>
-              <select 
-                className="admin-input"
-                value={productForm.status}
-                onChange={(e) => setProductForm(prev => ({ ...prev, status: e.target.value }))}
-              >
-                <option value="Active">Active</option>
-                <option value="Upcoming">Upcoming</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="admin-input-group admin-cascade-item" style={{ marginTop: '1rem', animationDelay: '0.3s' }}>
-            <label>Key Features</label>
-            <input 
-              type="text" 
-              className="admin-input" 
-              placeholder="e.g. Payroll, Attendance, Employee Portal"
-              value={productForm.features}
-              onChange={(e) => setProductForm(prev => ({ ...prev, features: e.target.value }))}
-            />
-          </div>
-
-          <div className="admin-cascade-item" style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem', animationDelay: '0.35s' }}>
-            <button type="button" className="btn btn-secondary btn-interactive" onClick={onClose} style={{ padding: '0.75rem 1.5rem' }}>
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary btn-interactive" style={{ padding: '0.75rem 1.5rem' }} disabled={loading}>
-              {loading ? 'Saving...' : 'Save Product'}
-            </button>
-          </div>
-        </form>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+            Subscription Tier
+          </label>
+          <select value={tier} onChange={(e) => setTier(e.target.value)} className="input-field">
+            <option value="STARTER">Starter</option>
+            <option value="PRO">Pro</option>
+            <option value="ENTERPRISE">Enterprise</option>
+          </select>
+        </div>
       </div>
-    </div>
+
+      <div>
+        <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+          Badge Tag (Optional)
+        </label>
+        <input
+          type="text"
+          value={badge}
+          onChange={(e) => setBadge(e.target.value)}
+          placeholder="e.g. Popular, Healthcare, Campus"
+          className="input-field"
+        />
+      </div>
+
+      <div>
+        <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+          Description
+        </label>
+        <textarea
+          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Describe the SaaS solution features..."
+          className="input-field"
+          style={{ height: 'auto', padding: '10px' }}
+        />
+      </div>
+
+      <div>
+        <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+          External Demo URL
+        </label>
+        <input
+          type="url"
+          value={demoUrl}
+          onChange={(e) => setDemoUrl(e.target.value)}
+          placeholder="https://clinic.carrezzaglobalsolutions.com"
+          className="input-field"
+        />
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: 'var(--space-2)' }}>
+        <button type="button" onClick={onCancel} className="btn-secondary">
+          Cancel
+        </button>
+        <button type="submit" disabled={loading} className="btn-primary">
+          {loading ? 'Saving...' : product ? 'Update Product' : 'Create Product'}
+        </button>
+      </div>
+    </form>
   );
 };
 
 export default ProductForm;
-

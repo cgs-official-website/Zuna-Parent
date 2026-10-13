@@ -8,13 +8,15 @@ const router = Router();
 // All team routes require authentication
 router.use(requireAuth);
 
-// All staff can list or view members (needed for ticket assignments)
+// All staff can list roles or members (needed for ticket assignments & forms)
+router.get('/roles', TeamController.listRoles);
+router.post('/roles', requireRole('SUPER_ADMIN', 'SUPPORT_LEAD'), TeamController.createRole);
 router.get('/', TeamController.listTeamMembers);
 router.get('/:id', TeamController.getTeamMemberById);
 
-// Staff provisioning & deletion restricted to SUPER_ADMIN only
-router.post('/', requireRole('SUPER_ADMIN'), TeamController.createTeamMember);
-router.patch('/:id', requireRole('SUPER_ADMIN'), TeamController.updateTeamMember);
+// Staff provisioning & management allowed for SUPER_ADMIN & SUPPORT_LEAD
+router.post('/', requireRole('SUPER_ADMIN', 'SUPPORT_LEAD'), TeamController.createTeamMember);
+router.patch('/:id', requireRole('SUPER_ADMIN', 'SUPPORT_LEAD'), TeamController.updateTeamMember);
 router.delete('/:id', requireRole('SUPER_ADMIN'), TeamController.deleteTeamMember);
 
 export default router;

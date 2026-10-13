@@ -1,863 +1,667 @@
-import React, { useState, useEffect, useRef } from 'react';
-import * as Icons from 'lucide-react';
-import { ticketsService } from '../../services/ticketsService';
-import { productsService } from '../../services/productsService';
-import { usersService } from '../../services/usersService';
-import { emailService } from '../../services/emailService';
-import { exportToExcel, exportToPDF } from '../../services/exportService';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  FiSearch,
+  FiFilter,
+  FiDownload,
+  FiMessageSquare,
+  FiUser,
+  FiMail,
+  FiSend,
+  FiX,
+  FiCheck,
+  FiClock,
+  FiAlertCircle,
+  FiFileText,
+  FiInbox
+} from 'react-icons/fi';
+import { useTickets } from '../../hooks/useTickets.js';
+import { useTeam } from '../../hooks/useTeam.js';
+import { useProducts } from '../../hooks/useProducts.js';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { PriorityBadge, StatusBadge } from '../common/Badge.jsx';
+import { TableSkeleton } from '../common/Skeleton.jsx';
+import { ticketsService } from '../../services/ticketsService.js';
+import { useToast } from '../../context/ToastContext.jsx';
 
-const DEFAULT_SUPPORT_AGENTS = [
-  { name: 'Mohamed Asfaque', email: 'carrezzaglobalsolutions@gmail.com', role: 'Support Engineer' },
-  { name: 'Sarah Jenkins', email: 'carrezzaglobalsolutions@gmail.com', role: 'Support Lead' },
-  { name: 'Alex Rivera', email: 'carrezzaglobalsolutions@gmail.com', role: 'Product Manager' },
-  { name: 'John Doe', email: 'carrezzaglobalsolutions@gmail.com', role: 'Support Engineer' },
-  { name: 'Tech Support', email: 'carrezzaglobalsolutions@gmail.com', role: 'Support Engineer' }
-];
+export const TicketsTable = () => {
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const { team } = useTeam();
+  const { products } = useProducts();
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [priorityFilter, setPriorityFilter] = useState('ALL');
+  const [productFilter, setProductFilter] = useState('ALL');
 
-const TicketsTable = () => {
-  const [tickets, setTickets] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [teamMembers, setTeamMembers] = useState(DEFAULT_SUPPORT_AGENTS);
-  
-  const [ticketSearch, setTicketSearch] = useState('');
-  const [ticketStatusFilter, setTicketStatusFilter] = useState('all');
-  const [ticketProductFilter, setTicketProductFilter] = useState('all');
-  const [ticketPriorityFilter, setTicketPriorityFilter] = useState('all');
+  const { tickets, loading, pulsingRowId, updateTicket, notifyAgent, refetch } = useTickets({
+    status: statusFilter === 'ALL' ? undefined : statusFilter,
+    priority: priorityFilter === 'ALL' ? undefined : priorityFilter,
+    product_id: productFilter === 'ALL' ? undefined : productFilter,
+    search: searchTerm || undefined
+  });
 
-  // Expanded ticket state for slide-over drawer
+  // Selected Ticket for Drawer
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [replyText, setReplyText] = useState('');
+  const [isInternalNote, setIsInternalNote] = useState(false);
   const [sendingReply, setSendingReply] = useState(false);
-  const [emailSendingStatus, setEmailSendingStatus] = useState({});
-  const [emailToast, setEmailToast] = useState({ show: false, message: '', type: 'success' });
+  const [notifying, setNotifying] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
-  // Export dropdown
-  const [exportOpen, setExportOpen] = useState(false);
-  const [exportToast, setExportToast] = useState('');
-  const exportRef = useRef(null);
+  // Filtered tickets in memory if needed
+  const filteredTickets = tickets.filter((t) => {
+    if (statusFilter !== 'ALL' && t.status !== statusFilter) return false;
+    if (priorityFilter !== 'ALL' && t.priority !== priorityFilter) return false;
+    if (productFilter !== 'ALL' && t.productId !== productFilter) return false;
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      const matchSubject = t.subject?.toLowerCase().includes(q);
+      const matchClient = t.clientName?.toLowerCase().includes(q) || t.clientEmail?.toLowerCase().includes(q);
+      const matchId = t.id?.toString().includes(q);
+      if (!matchSubject && !matchClient && !matchId) return false;
+    }
+    return true;
+  });
 
-  const showNotificationToast = (message, type = 'success', duration = 4500) => {
-    setEmailToast({ show: true, message, type });
-    setTimeout(() => {
-      setEmailToast({ show: false, message: '', type: 'success' });
-    }, duration);
-  };
-
-  const fetchTicketsAndProducts = async () => {
+  const handleExport = async (format) => {
+    setExporting(true);
     try {
-      const [tData, pData, uData] = await Promise.all([
-        ticketsService.getTickets(),
-        productsService.getProducts(),
-        usersService.getUsers()
-      ]);
-      setTickets(tData);
-      setProducts(pData);
-      
-      if (uData && uData.length > 0) {
-        // Merge fetched users with defaults
-        const memberMap = new Map();
-        DEFAULT_SUPPORT_AGENTS.forEach(m => memberMap.set(m.name.toLowerCase(), m));
-        uData.forEach(u => {
-          if (u.name) {
-            memberMap.set(u.name.toLowerCase(), {
-              name: u.name,
-              email: u.email || `${u.name.toLowerCase().replace(/\s+/g, '.')}@zuna.com`,
-              role: u.role || 'Member'
-            });
-          }
-        });
-        setTeamMembers(Array.from(memberMap.values()));
-      }
+      await ticketsService.exportTickets(format);
+      showToast(`Tickets exported to ${format.toUpperCase()} successfully`, 'success');
     } catch (err) {
-      console.error('Error fetching data:', err);
+      showToast(`Export failed: ${err.message}`, 'error');
+    } finally {
+      setExporting(false);
     }
   };
 
-  const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchTicketsAndProducts();
-    setRefreshing(false);
-  };
-
-  useEffect(() => {
-    // Initial fetch
-    fetchTicketsAndProducts();
-
-    // Subscribe to live Firestore & local ticket updates
-    const unsubscribeTickets = ticketsService.subscribeTickets((updatedTickets) => {
-      setTickets(updatedTickets);
-    });
-
-    // BroadcastChannel cross-tab listener for instant real-time updates across localhost tabs
-    let bc;
-    if (typeof window !== 'undefined' && window.BroadcastChannel) {
-      try {
-        bc = new BroadcastChannel('zuna_tickets_channel');
-        bc.onmessage = (event) => {
-          if (event.data) {
-            const newTicket = event.data;
-            setTickets((prev) => {
-              const exists = prev.some(t => t.id === newTicket.id || (t.subject === newTicket.subject && t.clientName === newTicket.clientName));
-              if (exists) return prev;
-              return [newTicket, ...prev];
-            });
-            try {
-              const current = JSON.parse(localStorage.getItem('zuna_tickets') || '[]');
-              const exists = current.some(t => t.id === newTicket.id);
-              if (!exists) {
-                localStorage.setItem('zuna_tickets', JSON.stringify([newTicket, ...current]));
-              }
-            } catch (e) {}
-          }
-        };
-      } catch (err) {}
-    }
-
-    return () => {
-      if (unsubscribeTickets) unsubscribeTickets();
-      if (bc) bc.close();
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (exportRef.current && !exportRef.current.contains(e.target)) {
-        setExportOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleTicketStatusChange = async (ticketId, newStatus) => {
+  const handleStatusChange = async (newStatus) => {
+    if (!selectedTicket) return;
     try {
-      await ticketsService.updateTicketStatus(ticketId, newStatus);
-      fetchTicketsAndProducts();
-      if (selectedTicket && selectedTicket.id === ticketId) {
-        setSelectedTicket(prev => prev ? { ...prev, status: newStatus } : null);
-      }
+      const updated = await updateTicket(selectedTicket.id, { status: newStatus });
+      setSelectedTicket((prev) => ({ ...prev, ...updated, status: newStatus }));
     } catch (err) {
-      console.error('Error updating status:', err);
-      alert('Failed to update ticket status');
+      // Toast already shown in hook
     }
   };
 
-  const handlePriorityChange = async (ticketId, newPriority) => {
+  const handleAgentAssignment = async (agentId) => {
+    if (!selectedTicket) return;
     try {
-      await ticketsService.updateTicketPriority(ticketId, newPriority);
-      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, priority: newPriority } : t));
-      if (selectedTicket && selectedTicket.id === ticketId) {
-        setSelectedTicket(prev => prev ? { ...prev, priority: newPriority } : null);
-      }
+      const updated = await updateTicket(selectedTicket.id, { assignedAdminId: agentId || null });
+      const foundAgent = team.find((m) => m.id === agentId);
+      setSelectedTicket((prev) => ({
+        ...prev,
+        ...updated,
+        assignedAdminId: agentId,
+        assignedAdmin: foundAgent || null
+      }));
     } catch (err) {
-      console.error('Error updating priority:', err);
-      alert('Failed to update ticket priority');
+      // Toast handled in hook
     }
   };
 
-  const handleAgentChange = async (ticketId, newAgentName) => {
+  const handleNotifyAgent = async () => {
+    if (!selectedTicket) return;
+    setNotifying(true);
     try {
-      const targetTicket = tickets.find(t => t.id === ticketId) || selectedTicket || {};
-      let agentEmail = '';
-
-      if (newAgentName && newAgentName !== 'Unassigned') {
-        const foundMember = teamMembers.find(m => m.name.toLowerCase() === newAgentName.toLowerCase());
-        agentEmail = foundMember?.email || '';
-      }
-
-      // Update Firestore / Local Storage
-      await ticketsService.updateTicketAgent(ticketId, newAgentName, agentEmail);
-      
-      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, assignedAgent: newAgentName, assignedAgentEmail: agentEmail } : t));
-      if (selectedTicket && selectedTicket.id === ticketId) {
-        setSelectedTicket(prev => prev ? { ...prev, assignedAgent: newAgentName, assignedAgentEmail: agentEmail } : null);
-      }
-
-      // If assigned to a real agent with an email, send email via Resend
-      if (newAgentName && newAgentName !== 'Unassigned' && agentEmail) {
-        setEmailSendingStatus(prev => ({ ...prev, [ticketId]: true }));
-        showNotificationToast(`⏳ Assigning & dispatching notification to ${agentEmail}...`, 'info', 2500);
-
-        const emailResult = await emailService.sendTicketAssignmentEmail({
-          ticket: { ...targetTicket, assignedAgent: newAgentName, assignedAgentEmail: agentEmail },
-          agentName: newAgentName,
-          agentEmail: agentEmail
-        });
-
-        setEmailSendingStatus(prev => ({ ...prev, [ticketId]: false }));
-
-        if (emailResult.success) {
-          const provider = emailResult.provider === 'nodemailer' ? 'Nodemailer' : 'Email';
-          showNotificationToast(`✓ Ticket #${ticketId} assigned & email dispatched to ${agentEmail} via ${provider}!`, 'success', 5000);
-        } else {
-          showNotificationToast(`Ticket #${ticketId} assigned to ${newAgentName}. Email status: ${emailResult.error}`, 'warning', 6000);
-        }
-      } else if (newAgentName === 'Unassigned') {
-        showNotificationToast(`Ticket #${ticketId} marked as Unassigned`, 'info', 3000);
-      }
-    } catch (err) {
-      console.error('Error updating assigned agent:', err);
-      showNotificationToast('Failed to update assigned agent', 'error');
-    }
-  };
-
-  const handleManualSendEmail = async (ticket) => {
-    if (!ticket || !ticket.assignedAgent || ticket.assignedAgent === 'Unassigned') {
-      alert('Please assign a team member to this ticket first.');
-      return;
-    }
-
-    const foundMember = teamMembers.find(m => m.name.toLowerCase() === ticket.assignedAgent.toLowerCase());
-    const agentEmail = ticket.assignedAgentEmail || foundMember?.email;
-
-    if (!agentEmail) {
-      alert(`No email address registered for ${ticket.assignedAgent}. Add their email in the Team Manager.`);
-      return;
-    }
-
-    setEmailSendingStatus(prev => ({ ...prev, [ticket.id]: true }));
-    showNotificationToast(`⏳ Sending ticket details to ${agentEmail} via Nodemailer...`, 'info', 2500);
-
-    const emailResult = await emailService.sendTicketAssignmentEmail({
-      ticket: ticket,
-      agentName: ticket.assignedAgent,
-      agentEmail: agentEmail
-    });
-
-    setEmailSendingStatus(prev => ({ ...prev, [ticket.id]: false }));
-
-    if (emailResult.success) {
-      const provider = emailResult.provider === 'nodemailer' ? 'Nodemailer' : 'Email';
-      showNotificationToast(`✓ ${provider} email successfully sent to ${agentEmail}!`, 'success', 5000);
-    } else {
-      showNotificationToast(`Email dispatch notice: ${emailResult.error}`, 'warning', 6000);
-    }
-  };
-
-  const handleDeleteTicket = async (ticketId) => {
-    if (window.confirm('Are you sure you want to delete this ticket?')) {
-      try {
-        await ticketsService.deleteTicket(ticketId);
-        setTickets(tickets.filter(t => t.id !== ticketId));
-        setExportToast('Ticket deleted successfully');
-        setTimeout(() => setExportToast(''), 3000);
-        if (selectedTicket && selectedTicket.id === ticketId) {
-          setSelectedTicket(null);
-        }
-      } catch (err) {
-        console.error('Error deleting ticket:', err);
-        alert('Failed to delete ticket');
-      }
+      await notifyAgent(selectedTicket.id);
+    } finally {
+      setNotifying(false);
     }
   };
 
   const handleSendReply = async (e) => {
     e.preventDefault();
     if (!replyText.trim() || !selectedTicket) return;
+
     setSendingReply(true);
-
-    const newReply = {
-      sender: 'Agent',
-      author: 'Admin Support',
-      text: replyText.trim(),
-      timestamp: 'Just now'
-    };
-
     try {
-      const updated = await ticketsService.addTicketReply(selectedTicket.id, newReply);
+      const newMsg = await ticketsService.addMessage(selectedTicket.id, replyText.trim(), isInternalNote);
+      setSelectedTicket((prev) => ({
+        ...prev,
+        messages: [...(prev.messages || []), newMsg]
+      }));
       setReplyText('');
-      fetchTicketsAndProducts();
-      if (updated) {
-        setSelectedTicket(updated);
-      } else {
-        const updatedMsgs = [...(selectedTicket.messages || []), newReply];
-        setSelectedTicket({ ...selectedTicket, messages: updatedMsgs });
-      }
+      showToast(isInternalNote ? 'Internal note added' : 'Reply sent to customer', 'success');
     } catch (err) {
-      console.error('Error adding reply:', err);
+      showToast(`Failed to post message: ${err.message}`, 'error');
     } finally {
       setSendingReply(false);
     }
   };
 
-  const renderIcon = (iconName, size = 18, className = "") => {
-    const IconComponent = Icons[iconName] || Icons.LifeBuoy;
-    return <IconComponent className={className} size={size} />;
-  };
-
-  const renderPriorityBadge = (priority) => {
-    const p = (priority || 'medium').toString().trim().toLowerCase();
-    if (p === 'urgent') {
-      return (
-        <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.74rem', fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
-          ⚡ Urgent
-        </span>
-      );
-    }
-    if (p === 'high') {
-      return (
-        <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.74rem', fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
-          High
-        </span>
-      );
-    }
-    if (p === 'low') {
-      return (
-        <span style={{ background: 'rgba(148, 163, 184, 0.15)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.3)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.74rem', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
-          Low
-        </span>
-      );
-    }
-    return (
-      <span style={{ background: 'rgba(0, 132, 255, 0.12)', color: 'var(--accent)', border: '1px solid rgba(0, 132, 255, 0.25)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.74rem', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
-        Medium
-      </span>
-    );
-  };
-
-  const renderProductBadge = (productName) => {
-    const p = productName || 'General Support';
-    let style = { background: 'rgba(0, 132, 255, 0.12)', color: '#0084FF', border: '1px solid rgba(0, 132, 255, 0.3)' };
-
-    if (p.includes('Clinic')) {
-      style = { background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' };
-    } else if (p.includes('School')) {
-      style = { background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.3)' };
-    } else if (p.includes('College')) {
-      style = { background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)' };
-    } else if (p.includes('Attendance') || p.includes('HRMS')) {
-      style = { background: 'rgba(0, 245, 212, 0.12)', color: '#00F5D4', border: '1px solid rgba(0, 245, 212, 0.3)' };
-    }
-
-    return (
-      <span style={{ ...style, padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-        {p}
-      </span>
-    );
-  };
-
-  const renderStatusBadge = (status) => {
-    const s = status || 'open';
-    if (s === 'in-progress') {
-      return (
-        <span style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
-          In Progress
-        </span>
-      );
-    }
-    if (s === 'resolved') {
-      return (
-        <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.75rem', fontWeight: 700, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
-          ✓ Resolved
-        </span>
-      );
-    }
-    if (s === 'closed') {
-      return (
-        <span style={{ background: 'rgba(148, 163, 184, 0.15)', color: '#94a3b8', border: '1px solid rgba(148, 163, 184, 0.3)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.75rem', fontWeight: 600, whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center' }}>
-          Closed
-        </span>
-      );
-    }
-    return (
-      <span className="badge-pulse" style={{ background: 'rgba(0, 245, 212, 0.12)', color: '#00F5D4', border: '1px solid rgba(0, 245, 212, 0.3)', padding: '0.25rem 0.65rem', borderRadius: '50px', fontSize: '0.75rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-        Open
-      </span>
-    );
-  };
-
-  const getTicketTimestamp = (ticket) => {
-    const val = ticket.createdAt;
-    if (!val) return 0;
-    if (typeof val === 'number') return val;
-    if (typeof val === 'string') {
-      const parsed = new Date(val).getTime();
-      return isNaN(parsed) ? 0 : parsed;
-    }
-    if (val?.toDate && typeof val.toDate === 'function') {
-      return val.toDate().getTime();
-    }
-    if (val?.seconds) {
-      return val.seconds * 1000;
-    }
-    return 0;
-  };
-
-  const filteredTickets = tickets.filter(ticket => {
-    const customerName = ticket.clientName || ticket.raisedBy?.name || ticket.customer_name || '';
-    const customerEmail = ticket.clientEmail || ticket.raisedBy?.email || ticket.customer_email || '';
-    const prodName = ticket.productName || ticket.product_name || '';
-    const ticketPriority = (ticket.priority || 'medium').toString().trim().toLowerCase();
-
-    const matchesSearch = 
-      ticket.id.toLowerCase().includes(ticketSearch.toLowerCase()) ||
-      customerName.toLowerCase().includes(ticketSearch.toLowerCase()) ||
-      customerEmail.toLowerCase().includes(ticketSearch.toLowerCase()) ||
-      ticket.description?.toLowerCase().includes(ticketSearch.toLowerCase()) ||
-      ticket.subject?.toLowerCase().includes(ticketSearch.toLowerCase());
-    
-    const matchesStatus = ticketStatusFilter === 'all' || ticket.status === ticketStatusFilter;
-    const matchesProduct = ticketProductFilter === 'all' || prodName.toLowerCase().includes(ticketProductFilter.toLowerCase());
-    const matchesPriority = ticketPriorityFilter === 'all' || ticketPriority === ticketPriorityFilter.toLowerCase();
-
-    return matchesSearch && matchesStatus && matchesProduct && matchesPriority;
-  }).sort((a, b) => getTicketTimestamp(b) - getTicketTimestamp(a));
-
-  const handleExportExcel = () => {
-    const data = filteredTickets.map(t => ({
-      'Ticket ID': t.id,
-      'Client Name': t.clientName || t.customer_name,
-      'Client Email': t.clientEmail || t.customer_email,
-      'Product': t.productName || t.product_name,
-      'Priority': t.priority || 'Medium',
-      'Status': t.status,
-      'Subject': t.subject,
-      'Assigned Agent': t.assignedAgent || 'Unassigned'
-    }));
-
-    exportToExcel(data, null, 'Zuna_Support_Tickets');
-    setExportOpen(false);
-    setExportToast('✓ Tickets Exported to Excel!');
-    setTimeout(() => setExportToast(''), 3000);
-  };
-
-  const handleExportPDF = () => {
-    const headers = ['Ticket ID', 'Client Name', 'Product', 'Priority', 'Status', 'Subject'];
-    const rows = filteredTickets.map(t => [
-      `#${t.id}`,
-      t.clientName || t.customer_name,
-      t.productName || t.product_name,
-      t.priority || 'Medium',
-      t.status,
-      t.subject
-    ]);
-
-    exportToPDF('Multi-Product Support Tickets', headers, rows, 'Zuna_Support_Tickets');
-    setExportOpen(false);
-    setExportToast('✓ Tickets PDF Document Generated!');
-    setTimeout(() => setExportToast(''), 3000);
-  };
+  const statuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
 
   return (
-    <div className="admin-panel" style={{ position: 'relative' }}>
-      {/* Header Bar */}
-      <div className="panel-header" style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--admin-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+    <div className="admin-container">
+      {/* Header & Controls Bar */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 'var(--space-4)',
+          marginBottom: 'var(--space-6)'
+        }}
+      >
         <div>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--admin-text-main)', margin: 0 }}>Multi-Product Ticket Monitor</h2>
-          <p style={{ margin: '0.2rem 0 0', fontSize: '0.84rem', color: 'var(--admin-text-muted)' }}>
-            Monitor and reply to support tickets from Attendance HRMS, Clinic System, School System, and College System.
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '4px' }}>Support Ticket Queue</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            Consolidated cross-app incident dispatching and resolution hub.
           </p>
         </div>
 
-        <div className="panel-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button 
-            className="btn btn-secondary admin-refresh-btn" 
-            onClick={handleRefresh}
-            disabled={refreshing}
-            style={{ padding: '0.5rem 1rem', fontSize: '0.82rem' }}
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => handleExport('csv')}
+            disabled={exporting}
+            className="btn-secondary"
+            style={{ height: '38px', gap: '6px' }}
           >
-            <Icons.RotateCw size={15} className={refreshing ? 'spin-icon' : ''} style={{ color: 'var(--accent)', marginRight: '0.4rem' }} />
-            <span>{refreshing ? 'Refreshing...' : 'Refresh Feed'}</span>
+            <FiDownload size={16} />
+            <span>Export CSV</span>
           </button>
-
-          {exportToast && (
-            <span style={{ background: '#00F5D4', color: '#0f172a', padding: '0.35rem 0.85rem', borderRadius: '50px', fontSize: '0.78rem', fontWeight: 700 }}>
-              {exportToast}
-            </span>
-          )}
-
-          {/* Search Input */}
-          <div className="search-input-wrapper">
-            <Icons.Search size={15} className="search-icon-svg" />
-            <input 
-              type="text" 
-              className="search-input" 
-              placeholder="Search ticket ID, client..." 
-              value={ticketSearch}
-              onChange={(e) => setTicketSearch(e.target.value)}
-              style={{ width: '210px' }}
-            />
-          </div>
-
-          {/* Filter by Product */}
-          <select 
-            className="filter-select"
-            value={ticketProductFilter}
-            onChange={(e) => setTicketProductFilter(e.target.value)}
+          <button
+            onClick={() => handleExport('pdf')}
+            disabled={exporting}
+            className="btn-secondary"
+            style={{ height: '38px', gap: '6px' }}
           >
-            <option value="all">All Ecosystem Products</option>
-            <option value="Attendance">Attendance (HRMS)</option>
-            <option value="Clinic">Clinic Management System</option>
-            <option value="School">School Management System</option>
-            <option value="College">College Management System</option>
-            <option value="General">General Support</option>
-          </select>
-
-          {/* Filter by Priority */}
-          <select 
-            className="filter-select"
-            value={ticketPriorityFilter}
-            onChange={(e) => setTicketPriorityFilter(e.target.value)}
-          >
-            <option value="all">All Priorities</option>
-            <option value="Urgent">Urgent</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </select>
-
-          {/* Filter by Status */}
-          <select 
-            className="filter-select"
-            value={ticketStatusFilter}
-            onChange={(e) => setTicketStatusFilter(e.target.value)}
-          >
-            <option value="all">All Statuses</option>
-            <option value="open">Open</option>
-            <option value="in-progress">In Progress</option>
-            <option value="resolved">Resolved</option>
-            <option value="closed">Closed</option>
-          </select>
-
-          {/* Export Dropdown */}
-          <div className="navbar-dropdown-wrapper" ref={exportRef}>
-            <button 
-              className="btn btn-secondary"
-              onClick={() => setExportOpen(!exportOpen)}
-              style={{ padding: '0.55rem 0.95rem', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem', height: '36px' }}
-            >
-              <Icons.Download size={15} /> Export
-            </button>
-
-            {exportOpen && (
-              <div className="navbar-dropdown-panel" style={{ width: '200px', top: 'calc(100% + 0.4rem)', right: 0 }}>
-                <div className="dropdown-header">Export Format</div>
-                <div className="user-dropdown-menu">
-                  <button className="dropdown-item" onClick={handleExportExcel}>
-                    <Icons.FileSpreadsheet size={15} style={{ color: '#10b981' }} />
-                    <span>Download Excel</span>
-                  </button>
-                  <button className="dropdown-item" onClick={handleExportPDF}>
-                    <Icons.FileText size={15} style={{ color: '#ef4444' }} />
-                    <span>Download PDF</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+            <FiFileText size={16} />
+            <span>Export PDF</span>
+          </button>
         </div>
       </div>
 
-      {/* Email / Action Toast Alert */}
-      {emailToast.show && (
-        <div style={{
-          position: 'sticky',
-          top: '10px',
-          zIndex: 100,
-          margin: '0.75rem 1.5rem',
-          padding: '0.75rem 1.25rem',
-          borderRadius: '10px',
+      {/* Filter and Search Toolbar */}
+      <div
+        className="card"
+        style={{
+          padding: 'var(--space-4)',
+          marginBottom: 'var(--space-5)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: emailToast.type === 'success' 
-            ? 'rgba(16, 185, 129, 0.18)' 
-            : emailToast.type === 'warning' 
-              ? 'rgba(245, 158, 11, 0.18)' 
-              : emailToast.type === 'info'
-                ? 'rgba(0, 132, 255, 0.18)'
-                : 'rgba(239, 68, 68, 0.18)',
-          border: `1px solid ${
-            emailToast.type === 'success' 
-              ? 'rgba(16, 185, 129, 0.4)' 
-              : emailToast.type === 'warning' 
-                ? 'rgba(245, 158, 11, 0.4)' 
-                : emailToast.type === 'info'
-                  ? 'rgba(0, 132, 255, 0.4)'
-                  : 'rgba(239, 68, 68, 0.4)'
-          }`,
-          color: emailToast.type === 'success' 
-            ? '#10b981' 
-            : emailToast.type === 'warning' 
-              ? '#fbbf24' 
-              : emailToast.type === 'info'
-                ? '#38bdf8'
-                : '#f87171',
-          fontSize: '0.86rem',
-          fontWeight: 600,
-          boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-          animation: 'fadeIn 0.2s ease-in-out'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <Icons.Mail size={18} />
-            <span>{emailToast.message}</span>
-          </div>
-          <button 
-            onClick={() => setEmailToast({ show: false, message: '', type: 'success' })}
-            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: '0.2rem' }}
-          >
-            <Icons.X size={16} />
-          </button>
+          flexWrap: 'wrap',
+          gap: 'var(--space-3)',
+          alignItems: 'center'
+        }}
+      >
+        {/* Search */}
+        <div style={{ flex: '1 1 240px', position: 'relative' }}>
+          <FiSearch
+            size={16}
+            color="var(--text-muted)"
+            style={{ position: 'absolute', left: '12px', top: '13px', pointerEvents: 'none' }}
+          />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search tickets by ID, subject, customer..."
+            className="input-field"
+            style={{ paddingLeft: '38px' }}
+          />
         </div>
-      )}
 
-      {/* Tickets Table */}
-      <div className="admin-table-container" style={{ width: '100%', overflowX: 'auto' }}>
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th style={{ width: '110px' }}>Ticket ID</th>
-              <th style={{ minWidth: '190px' }}>Client Name</th>
-              <th style={{ width: '170px' }}>Product Tag</th>
-              <th style={{ width: '110px' }}>Priority</th>
-              <th style={{ minWidth: '250px' }}>Subject / Issue</th>
-              <th style={{ width: '120px' }}>Status</th>
-              <th style={{ width: '170px' }}>Assigned Agent</th>
-              <th style={{ width: '120px' }}>Created Date</th>
-              <th style={{ textAlign: 'right', width: '120px' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTickets.map(ticket => {
-              const clientName = ticket.clientName || ticket.raisedBy?.name || ticket.customer_name || 'Client';
-              const clientEmail = ticket.clientEmail || ticket.raisedBy?.email || ticket.customer_email || 'client@zuna.com';
-              const prodName = ticket.productName || ticket.product_name || 'HRMS';
-              const isSending = emailSendingStatus[ticket.id];
+        {/* Status Filter */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="input-field"
+          style={{ width: 'auto', minWidth: '130px' }}
+        >
+          <option value="ALL">All Statuses</option>
+          <option value="OPEN">Open</option>
+          <option value="IN_PROGRESS">In Progress</option>
+          <option value="RESOLVED">Resolved</option>
+          <option value="CLOSED">Closed</option>
+        </select>
 
-              return (
-                <tr 
-                  key={ticket.id}
-                  onClick={() => setSelectedTicket(ticket)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <td style={{ fontWeight: 700, color: 'var(--accent)', whiteSpace: 'nowrap' }}>
-                    #{ticket.id}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--admin-text-main)', fontSize: '0.88rem', whiteSpace: 'nowrap' }}>{clientName}</span>
-                      <span style={{ fontSize: '0.78rem', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap' }}>{clientEmail}</span>
-                    </div>
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    {renderProductBadge(prodName)}
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                    <select
-                      className="filter-select"
-                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.78rem', borderRadius: '50px', cursor: 'pointer', fontWeight: 600 }}
-                      value={(ticket.priority || 'medium').toString().toLowerCase()}
-                      onChange={(e) => handlePriorityChange(ticket.id, e.target.value)}
-                    >
-                      <option value="urgent">⚡ Urgent</option>
-                      <option value="high">High</option>
-                      <option value="medium">Medium</option>
-                      <option value="low">Low</option>
-                    </select>
-                  </td>
-                  <td style={{ maxWidth: '280px' }}>
-                    <strong style={{ color: 'var(--admin-text-main)', fontSize: '0.88rem', display: 'block', marginBottom: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ticket.subject}</strong>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--admin-text-muted)', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {ticket.description}
-                    </span>
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>
-                    {renderStatusBadge(ticket.status)}
-                  </td>
-                  <td style={{ fontSize: '0.85rem', color: 'var(--admin-text-main)', fontWeight: 500, whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <select
-                        className="filter-select"
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.78rem', borderRadius: '8px', cursor: 'pointer', maxWidth: '145px' }}
-                        value={ticket.assignedAgent || 'Unassigned'}
-                        onChange={(e) => handleAgentChange(ticket.id, e.target.value)}
-                        disabled={isSending}
-                      >
-                        <option value="Unassigned">Unassigned</option>
-                        {teamMembers.map(m => (
-                          <option key={m.name} value={m.name}>{m.name}</option>
-                        ))}
-                      </select>
-                      {isSending && (
-                        <Icons.RotateCw size={14} className="spin-icon" style={{ color: 'var(--accent)' }} title="Sending assignment email via Resend..." />
-                      )}
-                    </div>
-                  </td>
-                  <td style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)', whiteSpace: 'nowrap' }}>
-                    {typeof ticket.createdAt === 'string' ? new Date(ticket.createdAt).toLocaleDateString('en-GB') : (ticket.createdAt?.toDate ? ticket.createdAt.toDate().toLocaleDateString('en-GB') : 'Today')}
-                  </td>
-                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }} onClick={(e) => e.stopPropagation()}>
-                    <button 
-                      className="btn btn-secondary" 
-                      onClick={() => setSelectedTicket(ticket)}
-                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.78rem', marginRight: '0.4rem' }}
-                    >
-                      View Thread
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTicket(ticket.id)}
-                      title="Delete ticket"
-                      style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.3rem', verticalAlign: 'middle' }}
-                    >
-                      <Icons.Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {filteredTickets.length === 0 && (
-              <tr>
-                <td colSpan="9" style={{ textAlign: 'center', padding: '3rem', color: 'var(--admin-text-muted)' }}>
-                  No support tickets matching your selected criteria.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {/* Priority Filter */}
+        <select
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value)}
+          className="input-field"
+          style={{ width: 'auto', minWidth: '130px' }}
+        >
+          <option value="ALL">All Priorities</option>
+          <option value="URGENT">Urgent</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
+        </select>
+
+        {/* Product Filter */}
+        <select
+          value={productFilter}
+          onChange={(e) => setProductFilter(e.target.value)}
+          className="input-field"
+          style={{ width: 'auto', minWidth: '160px' }}
+        >
+          <option value="ALL">All Products</option>
+          {products.map((prod) => (
+            <option key={prod.id} value={prod.id}>
+              {prod.title}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* TICKET DETAIL & CONVERSATION THREAD DRAWER */}
-      {selectedTicket && (
-        <div className="admin-modal-overlay" onClick={() => setSelectedTicket(null)}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '660px', width: '90%', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}>
-            {/* Header */}
-            <div className="admin-modal-header" style={{ paddingBottom: '1rem', borderBottom: '1px solid var(--admin-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.25rem' }}>
-                  <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--accent)' }}>Ticket #{selectedTicket.id}</span>
-                  {renderProductBadge(selectedTicket.productName || selectedTicket.product_name)}
-                  {renderPriorityBadge(selectedTicket.priority)}
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--admin-text-main)' }}>{selectedTicket.subject}</h3>
-              </div>
-              <button onClick={() => setSelectedTicket(null)} style={{ background: 'none', border: 'none', color: 'var(--admin-text-muted)', cursor: 'pointer' }}>
-                <Icons.X size={20} />
-              </button>
-            </div>
+      {/* Ticket Table (Desktop) / Cards (Mobile) */}
+      {loading ? (
+        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+          <TableSkeleton rows={6} cols={6} />
+        </div>
+      ) : filteredTickets.length === 0 ? (
+        <div
+          className="card"
+          style={{
+            padding: 'var(--space-10) var(--space-4)',
+            textAlign: 'center',
+            color: 'var(--text-muted)'
+          }}
+        >
+          <FiInbox size={48} style={{ opacity: 0.4, marginBottom: '12px' }} />
+          <h3 style={{ fontSize: '1.125rem', color: 'var(--text)', marginBottom: '4px' }}>
+            No Support Tickets Found
+          </h3>
+          <p style={{ fontSize: '0.875rem' }}>
+            Try adjusting your search criteria or filters to locate tickets.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop Tabular View */}
+          <div className="table-container hide-on-mobile">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Ticket</th>
+                  <th>Subject & Details</th>
+                  <th>Product</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Assigned Agent</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTickets.map((ticket) => {
+                  const isPulsing = pulsingRowId === ticket.id;
 
-            {/* Metadata Controls */}
-            <div style={{ padding: '0.85rem 0', borderBottom: '1px solid var(--admin-border)', display: 'grid', gridTemplateColumns: '1fr 1.2fr 1fr 1fr', gap: '0.65rem', fontSize: '0.82rem' }}>
-              <div>
-                <span style={{ color: 'var(--admin-text-muted)', display: 'block', fontSize: '0.74rem' }}>Client Name</span>
-                <strong style={{ color: 'var(--admin-text-main)', display: 'block', marginTop: '0.2rem' }}>{selectedTicket.clientName || selectedTicket.customer_name || 'Client'}</strong>
-              </div>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
-                  <span style={{ color: 'var(--admin-text-muted)', fontSize: '0.74rem' }}>Assigned Agent</span>
-                  {selectedTicket.assignedAgent && selectedTicket.assignedAgent !== 'Unassigned' && (
-                    <button
-                      onClick={() => handleManualSendEmail(selectedTicket)}
-                      title="Send ticket details via Resend email"
-                      style={{ background: 'none', border: 'none', color: '#00F5D4', cursor: 'pointer', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.2rem', padding: 0 }}
+                  return (
+                    <tr
+                      key={ticket.id}
+                      onClick={() => setSelectedTicket(ticket)}
+                      className={isPulsing ? 'row-pulse' : ''}
+                      style={{ cursor: 'pointer' }}
                     >
-                      <Icons.Mail size={12} /> Resend Mail
-                    </button>
-                  )}
-                </div>
-                <select 
-                  className="filter-select"
-                  style={{ width: '100%', padding: '0.25rem 0.4rem', fontSize: '0.78rem' }}
-                  value={selectedTicket.assignedAgent || 'Unassigned'}
-                  onChange={(e) => handleAgentChange(selectedTicket.id, e.target.value)}
-                  disabled={emailSendingStatus[selectedTicket.id]}
-                >
-                  <option value="Unassigned">Unassigned</option>
-                  {teamMembers.map(m => (
-                    <option key={m.name} value={m.name}>{m.name}</option>
-                  ))}
-                </select>
-                {selectedTicket.assignedAgent && selectedTicket.assignedAgent !== 'Unassigned' && (
-                  <span style={{ fontSize: '0.7rem', color: '#38bdf8', marginTop: '0.2rem', display: 'block' }}>
-                    ✉ {selectedTicket.assignedAgentEmail || teamMembers.find(m => m.name.toLowerCase() === selectedTicket.assignedAgent.toLowerCase())?.email || 'No email'}
+                      <td style={{ fontWeight: 800, color: 'var(--accent)', whiteSpace: 'nowrap' }}>
+                        #{ticket.id}
+                      </td>
+                      <td style={{ maxWidth: '320px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>
+                          {ticket.subject}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '0.75rem',
+                            color: 'var(--text-muted)',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
+                        >
+                          {ticket.clientName} ({ticket.clientEmail})
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 500 }}>
+                          {ticket.product?.title || ticket.productNameSnapshot || 'General'}
+                        </span>
+                      </td>
+                      <td>
+                        <PriorityBadge priority={ticket.priority} />
+                      </td>
+                      <td>
+                        <StatusBadge status={ticket.status} />
+                      </td>
+                      <td>
+                        {ticket.assignedAdmin ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <FiUser size={14} color="var(--accent)" />
+                            <span style={{ fontSize: '0.8125rem', fontWeight: 600 }}>
+                              {ticket.assignedAdmin.name}
+                            </span>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '0.8125rem', color: 'var(--text-disabled)' }}>
+                            Unassigned
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                        {new Date(ticket.createdAt).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Stacked Cards View */}
+          <div className="show-on-mobile" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {filteredTickets.map((ticket) => (
+              <div
+                key={ticket.id}
+                onClick={() => setSelectedTicket(ticket)}
+                className="card card-hover"
+                style={{ cursor: 'pointer', padding: 'var(--space-4)' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 800, color: 'var(--accent)', fontSize: '0.875rem' }}>
+                    #{ticket.id}
                   </span>
-                )}
-              </div>
-              <div>
-                <span style={{ color: 'var(--admin-text-muted)', display: 'block', fontSize: '0.74rem', marginBottom: '0.2rem' }}>Priority Level</span>
-                <select 
-                  className="filter-select"
-                  style={{ width: '100%', padding: '0.25rem 0.4rem', fontSize: '0.78rem' }}
-                  value={(selectedTicket.priority || 'medium').toString().toLowerCase()}
-                  onChange={(e) => handlePriorityChange(selectedTicket.id, e.target.value)}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="urgent">⚡ Urgent</option>
-                </select>
-              </div>
-              <div>
-                <span style={{ color: 'var(--admin-text-muted)', display: 'block', fontSize: '0.74rem', marginBottom: '0.2rem' }}>Update Status</span>
-                <select 
-                  className="filter-select"
-                  style={{ width: '100%', padding: '0.25rem 0.4rem', fontSize: '0.78rem' }}
-                  value={selectedTicket.status}
-                  onChange={(e) => handleTicketStatusChange(selectedTicket.id, e.target.value)}
-                >
-                  <option value="open">Open</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="resolved">Resolved</option>
-                  <option value="closed">Closed</option>
-                </select>
-              </div>
-            </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <PriorityBadge priority={ticket.priority} />
+                    <StatusBadge status={ticket.status} />
+                  </div>
+                </div>
 
-            {/* Conversation Thread Messages */}
-            <div style={{ padding: '1rem 0', flexGrow: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              <div style={{ padding: '0.85rem', background: 'var(--theme-toggle-bg, rgba(255,255,255,0.03))', borderRadius: '10px', border: '1px solid var(--admin-border)' }}>
-                <div style={{ fontSize: '0.78rem', color: 'var(--admin-text-muted)', marginBottom: '0.35rem', fontWeight: 600 }}>Initial Ticket Description:</div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--admin-text-main)', lineHeight: 1.5 }}>{selectedTicket.description}</p>
-              </div>
+                <h4 style={{ fontSize: '0.9375rem', marginBottom: '4px', lineHeight: 1.3 }}>
+                  {ticket.subject}
+                </h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                  {ticket.clientName} • {ticket.product?.title || 'General'}
+                </p>
 
-              {(selectedTicket.messages || [
-                { sender: 'Client', author: `${selectedTicket.clientName || 'Client'} Support`, text: selectedTicket.description, timestamp: '2 hours ago' }
-              ]).map((msg, i) => (
-                <div 
-                  key={i} 
-                  style={{ 
-                    alignSelf: msg.sender === 'Agent' ? 'flex-end' : 'flex-start',
-                    maxWidth: '85%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '12px',
-                    background: msg.sender === 'Agent' ? 'rgba(0, 132, 255, 0.12)' : 'var(--theme-toggle-bg, rgba(255,255,255,0.04))',
-                    border: msg.sender === 'Agent' ? '1px solid rgba(0, 132, 255, 0.25)' : '1px solid var(--admin-border)'
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingTop: '8px',
+                    borderTop: '1px solid var(--border)',
+                    fontSize: '0.75rem',
+                    color: 'var(--text-secondary)'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '0.25rem', fontSize: '0.75rem' }}>
-                    <strong style={{ color: msg.sender === 'Agent' ? 'var(--accent)' : '#00F5D4' }}>{msg.author || msg.sender}</strong>
-                    <span style={{ color: 'var(--admin-text-muted)' }}>{msg.timestamp}</span>
-                  </div>
-                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--admin-text-main)', lineHeight: 1.45 }}>{msg.text}</p>
+                  <span>{ticket.assignedAdmin?.name || 'Unassigned'}</span>
+                  <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
                 </div>
-              ))}
-            </div>
-
-            {/* Reply Input Form */}
-            <form onSubmit={handleSendReply} style={{ paddingTop: '1rem', borderTop: '1px solid var(--admin-border)', display: 'flex', gap: '0.75rem' }}>
-              <input 
-                type="text" 
-                className="admin-input" 
-                placeholder="Write reply to client..." 
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                style={{ flexGrow: 1, fontSize: '0.85rem' }}
-                required
-              />
-              <button 
-                type="submit" 
-                className="btn btn-primary"
-                disabled={sendingReply}
-                style={{ whiteSpace: 'nowrap', padding: '0.6rem 1.1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-              >
-                <Icons.Send size={15} /> {sendingReply ? 'Sending...' : 'Send Reply'}
-              </button>
-            </form>
+              </div>
+            ))}
           </div>
-        </div>
+        </>
       )}
+
+      {/* Slide-Over Detail Drawer */}
+      <AnimatePresence>
+        {selectedTicket && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9960,
+              display: 'flex',
+              justifyContent: 'flex-end'
+            }}
+          >
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedTicket(null)}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0, 0, 0, 0.65)',
+                backdropFilter: 'blur(4px)'
+              }}
+            />
+
+            {/* Slide-Over Drawer */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="glass-panel"
+              style={{
+                position: 'relative',
+                zIndex: 1,
+                width: '100%',
+                maxWidth: '640px',
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: 0,
+                borderRight: 'none',
+                borderTop: 'none',
+                borderBottom: 'none',
+                background: 'var(--surface)',
+                overflowY: 'auto'
+              }}
+            >
+              {/* Drawer Header */}
+              <div
+                style={{
+                  padding: 'var(--space-5) var(--space-6)',
+                  borderBottom: '1px solid var(--border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  position: 'sticky',
+                  top: 0,
+                  background: 'var(--surface)',
+                  zIndex: 10
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>
+                      Ticket #{selectedTicket.id}
+                    </span>
+                    <PriorityBadge priority={selectedTicket.priority} />
+                  </div>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                    Created on {new Date(selectedTicket.createdAt).toLocaleString()}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setSelectedTicket(null)}
+                  className="btn-ghost"
+                  style={{ padding: '8px', borderRadius: 'var(--radius-full)' }}
+                >
+                  <FiX size={22} />
+                </button>
+              </div>
+
+              {/* Drawer Body */}
+              <div style={{ padding: 'var(--space-6)', flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+                {/* Lifecycle Stepper */}
+                <div style={{ background: 'var(--surface-2)', padding: 'var(--space-4)', borderRadius: 'var(--radius-md)' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '10px' }}>
+                    Status Lifecycle
+                  </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                    {statuses.map((st) => {
+                      const isCurrent = selectedTicket.status === st;
+                      return (
+                        <button
+                          key={st}
+                          onClick={() => handleStatusChange(st)}
+                          style={{
+                            padding: '8px 4px',
+                            borderRadius: 'var(--radius-xs)',
+                            fontSize: '0.6875rem',
+                            fontWeight: isCurrent ? 800 : 500,
+                            background: isCurrent ? 'var(--accent)' : 'var(--surface)',
+                            color: isCurrent ? 'var(--accent-contrast)' : 'var(--text-muted)',
+                            border: `1px solid ${isCurrent ? 'var(--accent)' : 'var(--border)'}`,
+                            cursor: 'pointer',
+                            transition: 'all var(--transition-fast)',
+                            textAlign: 'center'
+                          }}
+                        >
+                          {st.replace('_', ' ')}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Assignment & Nodemailer Email Dispatch Panel */}
+                <div style={{ background: 'var(--surface-2)', padding: 'var(--space-4)', borderRadius: 'var(--radius-md)' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                    Assigned Support Engineer
+                  </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                    <select
+                      value={selectedTicket.assignedAdminId || ''}
+                      onChange={(e) => handleAgentAssignment(e.target.value)}
+                      className="input-field"
+                      style={{ flex: 1, minWidth: '180px' }}
+                    >
+                      <option value="">Unassigned</option>
+                      {team.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.name} ({member.email})
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={handleNotifyAgent}
+                      disabled={notifying || !selectedTicket.assignedAdminId}
+                      className="btn-primary"
+                      style={{ height: '42px', padding: '0 14px', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}
+                    >
+                      <FiMail size={16} />
+                      <span>{notifying ? 'Dispatching...' : 'Notify via Nodemailer'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Ticket Details */}
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-2)' }}>
+                    {selectedTicket.subject}
+                  </h3>
+                  <div
+                    style={{
+                      background: 'var(--surface-2)',
+                      padding: 'var(--space-4)',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.875rem',
+                      lineHeight: 1.6,
+                      color: 'var(--text)',
+                      whiteSpace: 'pre-wrap',
+                      border: '1px solid var(--border)'
+                    }}
+                  >
+                    {selectedTicket.description || 'No description provided.'}
+                  </div>
+                </div>
+
+                {/* Customer Details Box */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                  <div style={{ padding: '12px', background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Customer Name</span>
+                    <div style={{ fontWeight: 600, fontSize: '0.875rem', marginTop: '2px' }}>
+                      {selectedTicket.clientName || 'N/A'}
+                    </div>
+                  </div>
+                  <div style={{ padding: '12px', background: 'var(--surface-2)', borderRadius: 'var(--radius-sm)' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Customer Email</span>
+                    <div style={{ fontWeight: 600, fontSize: '0.875rem', marginTop: '2px' }}>
+                      {selectedTicket.clientEmail || 'N/A'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Threaded Messages Conversation */}
+                <div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '12px' }}>
+                    Conversation Thread ({selectedTicket.messages?.length || 0})
+                  </span>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+                    {selectedTicket.messages?.map((msg, idx) => (
+                      <div
+                        key={msg.id || idx}
+                        style={{
+                          padding: '12px 16px',
+                          borderRadius: 'var(--radius-sm)',
+                          background: msg.isInternal ? 'var(--warning-bg)' : 'var(--surface-2)',
+                          border: `1px solid ${msg.isInternal ? 'rgba(245, 158, 11, 0.3)' : 'var(--border)'}`,
+                          alignSelf: msg.senderRole === 'ADMIN' ? 'flex-end' : 'flex-start',
+                          maxWidth: '90%'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', marginBottom: '4px', fontSize: '0.75rem' }}>
+                          <span style={{ fontWeight: 700, color: msg.isInternal ? 'var(--warning)' : 'var(--accent)' }}>
+                            {msg.authorAdmin?.name || msg.senderName || 'Support Team'}{' '}
+                            {msg.isInternal && '(Internal Note)'}
+                          </span>
+                          <span style={{ color: 'var(--text-muted)' }}>
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.875rem', lineHeight: 1.5, color: 'var(--text)' }}>
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Reply Input Box */}
+                  <form onSubmit={handleSendReply} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <textarea
+                      rows={3}
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder={isInternalNote ? 'Type an internal team note...' : 'Type a response to the customer...'}
+                      className="input-field"
+                      style={{ height: 'auto', padding: '12px' }}
+                    />
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8125rem', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={isInternalNote}
+                          onChange={(e) => setIsInternalNote(e.target.checked)}
+                          style={{ accentColor: 'var(--accent)' }}
+                        />
+                        <span>Internal Note (Team only)</span>
+                      </label>
+
+                      <button
+                        type="submit"
+                        disabled={sendingReply || !replyText.trim()}
+                        className="btn-primary"
+                        style={{ height: '36px', padding: '0 16px', gap: '6px' }}
+                      >
+                        <FiSend size={14} />
+                        <span>{sendingReply ? 'Posting...' : 'Send Message'}</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

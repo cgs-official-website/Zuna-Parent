@@ -25,8 +25,9 @@ const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'http://localhost:5173')
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, Postman) or matched origins
-      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      // Allow requests with no origin, matched origins, or local development ports
+      const isLocalhost = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || isLocalhost) {
         callback(null, true);
       } else {
         callback(new Error(`Origin ${origin} not allowed by CORS`));

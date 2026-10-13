@@ -1,9 +1,32 @@
 import React from 'react';
-import * as Icons from 'lucide-react';
+import {
+  FiLayers,
+  FiActivity,
+  FiBook,
+  FiBriefcase,
+  FiHeart,
+  FiClock,
+  FiArrowRight,
+  FiLifeBuoy,
+  FiGrid,
+  FiCalendar,
+  FiCheckSquare
+} from 'react-icons/fi';
+
+const iconMap = {
+  Layers: FiLayers,
+  Activity: FiActivity,
+  Book: FiBook,
+  Briefcase: FiBriefcase,
+  Heart: FiHeart,
+  Grid: FiGrid,
+  Calendar: FiCalendar,
+  CheckSquare: FiCheckSquare
+};
 
 const ProductCard = ({ product, onOpenDemo, onOpenTicket }) => {
   const renderIcon = (iconName) => {
-    const IconComponent = Icons[iconName] || Icons.Layers;
+    const IconComponent = iconMap[iconName] || FiLayers;
     return <IconComponent size={24} />;
   };
 
@@ -84,7 +107,7 @@ const ProductCard = ({ product, onOpenDemo, onOpenTicket }) => {
               opacity: 0.7 
             }}
           >
-            Coming Soon <Icons.Clock size={15} />
+            Coming Soon <FiClock size={15} />
           </span>
         ) : (
           <a 
@@ -96,7 +119,7 @@ const ProductCard = ({ product, onOpenDemo, onOpenTicket }) => {
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}
           >
             {hasExternalUrl ? 'Learn More' : 'Request Demo'} 
-            <Icons.ArrowRight size={16} />
+            <FiArrowRight size={16} />
           </a>
         )}
 
@@ -104,9 +127,9 @@ const ProductCard = ({ product, onOpenDemo, onOpenTicket }) => {
           onClick={() => onOpenTicket(product.id, product.name)} 
           className="btn-action" 
           title="Raise support ticket"
-          style={{ borderRadius: '50px', padding: '0.4rem 0.8rem', fontSize: '0.75rem', display: 'flex', gap: '0.25rem', alignItems: 'center', background: 'rgba(0,132,255,0.05)', color: 'var(--accent)', border: '1px solid rgba(0,132,255,0.1)' }}
+          style={{ borderRadius: '50px', padding: '0.4rem 0.8rem', fontSize: '0.75rem', display: 'flex', gap: '0.25rem', alignItems: 'center', background: 'rgba(255, 195, 0, 0.1)', color: 'var(--accent)', border: '1px solid rgba(255, 195, 0, 0.2)' }}
         >
-          <Icons.LifeBuoy size={12} /> Support
+          <FiLifeBuoy size={12} /> Support
         </button>
       </div>
     </div>
@@ -114,4 +137,3 @@ const ProductCard = ({ product, onOpenDemo, onOpenTicket }) => {
 };
 
 export default ProductCard;
-

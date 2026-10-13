@@ -1,10 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import * as Icons from 'lucide-react';
+import {
+  FiCpu,
+  FiLayers,
+  FiZap,
+  FiShield,
+  FiPhoneCall,
+  FiArrowRight,
+  FiLinkedin,
+  FiInstagram,
+  FiMapPin,
+  FiMail,
+  FiGlobe,
+  FiCheck
+} from 'react-icons/fi';
 import ProductCard from './ProductCard';
 import TicketRaiseForm from './TicketRaiseForm';
 import { productsService } from '../../services/productsService';
 import { demoService } from '../../services/demoService';
+import '../../styles/landing.css';
 
 function LandingPage() {
   const [products, setProducts] = useState([]);
@@ -110,7 +124,7 @@ function LandingPage() {
       <header className={`header ${scrolled ? 'scrolled' : ''}`}>
         <div className="nav-container">
           <Link to="/" className="logo">
-            <img src="/Zuna_HRMS_Logo_Navy.png" alt="Zuna Logo" className="logo-img" />
+            <img src="/logo.png" alt="Zuna Logo" className="logo-img" />
             <span className="logo-text">Zuna</span>
           </Link>
           
@@ -156,7 +170,7 @@ function LandingPage() {
         <div className="hero-container">
           <div className="hero-content reveal">
             <div className="hero-tagline">
-              <Icons.Cpu size={16} style={{ strokeWidth: 2.5 }} />
+              <FiCpu size={16} />
               Enterprise-Grade Platform
             </div>
             <h1 className="hero-title">Powering Businesses with <span>Smart Software</span> Solutions</h1>
@@ -170,7 +184,7 @@ function LandingPage() {
             <div className="hero-mockup-wrapper">
               <div className="hero-bg-glow"></div>
               <div className="floating-logo-canvas">
-                <img src="/Zuna_HRMS_Logo_Navy.png" alt="Zuna Geometric Motif" className="hero-logo-motif" />
+                <img src="/logo.png" alt="Zuna Geometric Motif" className="hero-logo-motif" />
               </div>
             </div>
           </div>
@@ -239,28 +253,28 @@ function LandingPage() {
             <div className="why-features">
               <div className="feature-item">
                 <div className="feature-icon-wrapper">
-                  <Icons.Layers size={24} style={{ color: 'var(--accent)' }} />
+                  <FiLayers size={24} style={{ color: 'var(--accent)' }} />
                 </div>
                 <h4 className="feature-title">All-in-One Platform</h4>
                 <p className="feature-desc">No more juggling multiple vendors. Zuna provides all solutions under one subscription.</p>
               </div>
               <div className="feature-item">
                 <div className="feature-icon-wrapper">
-                  <Icons.Sparkles size={24} style={{ color: 'var(--accent)' }} />
+                  <FiZap size={24} style={{ color: 'var(--accent)' }} />
                 </div>
                 <h4 className="feature-title">Easy to Use</h4>
                 <p className="feature-desc">Intuitive visual interfaces designed for speed with close-to-zero learning curve.</p>
               </div>
               <div className="feature-item">
                 <div className="feature-icon-wrapper">
-                  <Icons.Shield size={24} style={{ color: 'var(--accent)' }} />
+                  <FiShield size={24} style={{ color: 'var(--accent)' }} />
                 </div>
                 <h4 className="feature-title">Secure & Reliable</h4>
                 <p className="feature-desc">Enterprise-grade encryption protecting your customer and organization databases 24/7.</p>
               </div>
               <div className="feature-item">
                 <div className="feature-icon-wrapper">
-                  <Icons.PhoneCall size={24} style={{ color: 'var(--accent)' }} />
+                  <FiPhoneCall size={24} style={{ color: 'var(--accent)' }} />
                 </div>
                 <h4 className="feature-title">24/7 Dedicated Support</h4>
                 <p className="feature-desc">Our expert customer success managers are always available to assist your operations.</p>
@@ -377,7 +391,7 @@ function LandingPage() {
           <p className="cta-desc">Get in touch with our enterprise team today for a tailored walkthrough of the Zuna software suite.</p>
           <div className="hero-actions" style={{ justifyContent: 'center', gap: '1.25rem', display: 'flex', flexWrap: 'wrap', marginTop: '2rem' }}>
             <button onClick={() => openDemoModal()} className="btn btn-primary btn-large">
-              Request Live Demo <Icons.ArrowRight size={18} style={{ marginLeft: '0.5rem' }} />
+              Request Live Demo <FiArrowRight size={18} style={{ marginLeft: '0.5rem' }} />
             </button>
             <button onClick={() => openTicketModal()} className="btn btn-outline btn-large">
               Raise Support Ticket
@@ -391,16 +405,16 @@ function LandingPage() {
         <div className="footer-container">
           <div className="footer-brand">
             <Link to="/" className="footer-logo">
-              <img src="/Zuna_HRMS_Logo_Navy.png" alt="Zuna Logo" className="footer-logo-img" />
+              <img src="/logo.png" alt="Zuna Logo" className="footer-logo-img" />
               <span className="footer-logo-text">Zuna</span>
             </Link>
             <p className="footer-tagline">Providing next-generation management software ERPs, CRMs, and billing tools built for scalability and performance.</p>
             <div className="footer-socials">
               <a href="https://in.linkedin.com/company/carrezza-global-solutions-pvt-ltd" target="_blank" rel="noreferrer" className="footer-social-link" aria-label="LinkedIn">
-                <Icons.Linkedin size={20} />
+                <FiLinkedin size={20} />
               </a>
               <a href="https://www.instagram.com/teamcarrezza/" target="_blank" rel="noreferrer" className="footer-social-link" aria-label="Instagram">
-                <Icons.Instagram size={20} />
+                <FiInstagram size={20} />
               </a>
             </div>
           </div>
@@ -413,7 +427,7 @@ function LandingPage() {
             </p>
             <div className="footer-company-info" style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               <p style={{ margin: 0, display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                <Icons.MapPin size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '0.2rem' }} />
+                <FiMapPin size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '0.2rem' }} />
                 <a 
                   href="https://www.google.com/maps/search/Carrezza+Global+Solutions,+Perundurai,+Erode,+Tamil+Nadu,+India" 
                   target="_blank" 
@@ -426,11 +440,11 @@ function LandingPage() {
                 </a>
               </p>
               <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Icons.Mail size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                <FiMail size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                 <a href="mailto:info@teamcarrezza.com" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>info@teamcarrezza.com</a>
               </p>
               <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Icons.Globe size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                <FiGlobe size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                 <a href="https://www.teamcarrezza.com" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>www.teamcarrezza.com</a>
               </p>
             </div>
@@ -496,8 +510,8 @@ function LandingPage() {
             
             {demoSuccess ? (
               <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-                <div style={{ width: '64px', height: '64px', background: 'rgba(0, 210, 196, 0.1)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-teal)', marginBottom: '1.5rem' }}>
-                  <Icons.Check size={32} style={{ strokeWidth: 2.5 }} />
+                <div style={{ width: '64px', height: '64px', background: 'rgba(255, 195, 0, 0.12)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', marginBottom: '1.5rem' }}>
+                  <FiCheck size={32} />
                 </div>
                 <h3 style={{ fontSize: '1.75rem', marginBottom: '0.75rem', color: 'var(--primary)' }}>Thank You, {demoForm.name}!</h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '2rem', maxWidth: '320px', marginLeft: 'auto', marginRight: 'auto' }}>

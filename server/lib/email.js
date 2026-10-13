@@ -225,6 +225,85 @@ function generateClientReplyEmailHtml({ ticket, authorName, text }) {
   `;
 }
 
+/**
+ * Generate welcome email HTML for new team member
+ */
+function generateTeamWelcomeEmailHtml({ member, rawPassword }) {
+  const loginUrl = `${process.env.FRONTEND_ORIGIN || 'http://localhost:5173'}/admin`;
+  const roleDisplay = (member.role || 'SUPPORT_ENGINEER').replace(/_/g, ' ');
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Welcome to Zuna Support Team</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0A0F1D; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f8fafc;">
+  <div style="max-width: 580px; margin: 32px auto; background: #161F38; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);">
+    <!-- Header with Zuna Branding -->
+    <div style="background: linear-gradient(135deg, #FFC300 0%, #FFD60A 100%); padding: 32px 24px; text-align: center;">
+      <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: #0A0A0A; letter-spacing: -0.02em;">Zuna</h1>
+      <p style="margin: 6px 0 0; font-size: 13px; font-weight: 700; color: #0A0A0A; text-transform: uppercase; letter-spacing: 0.05em;">Enterprise Support Command Center</p>
+    </div>
+
+    <!-- Body -->
+    <div style="padding: 32px 28px;">
+      <h2 style="margin: 0 0 12px; font-size: 20px; font-weight: 700; color: #ffffff;">Welcome aboard, ${member.name}!</h2>
+      <p style="margin: 0 0 20px; font-size: 14px; color: #cbd5e1; line-height: 1.6;">
+        You have been provisioned as a <strong style="color: #FFD60A;">${roleDisplay}</strong> in the Zuna Central Admin Portal.
+      </p>
+
+      <!-- Credentials Card -->
+      <div style="background: #0A0F1D; border-radius: 12px; border: 1px solid rgba(255, 195, 0, 0.3); padding: 22px; margin-bottom: 24px;">
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #FFC300; letter-spacing: 0.08em; margin-bottom: 16px;">
+          Your Portal Credentials
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <tr>
+            <td style="padding: 8px 0; color: #94a3b8; width: 120px; font-weight: 500;">Login Portal:</td>
+            <td style="padding: 8px 0; color: #f8fafc; font-weight: 600;">
+              <a href="${loginUrl}" style="color: #FFD60A; text-decoration: underline;">${loginUrl}</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #94a3b8; font-weight: 500;">Email:</td>
+            <td style="padding: 8px 0; color: #ffffff; font-weight: 700; font-family: monospace; font-size: 15px;">${member.email}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #94a3b8; font-weight: 500;">Password:</td>
+            <td style="padding: 8px 0; color: #ffffff; font-weight: 700; font-family: monospace; font-size: 15px; letter-spacing: 0.05em;">${rawPassword}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #94a3b8; font-weight: 500;">Assigned Role:</td>
+            <td style="padding: 8px 0; color: #10B981; font-weight: 700;">${roleDisplay}</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Action Button -->
+      <div style="text-align: center; margin: 28px 0;">
+        <a href="${loginUrl}" style="display: inline-block; background: #FFC300; color: #0A0A0A; padding: 12px 32px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none; box-shadow: 0 4px 14px rgba(255, 195, 0, 0.4);">
+          Sign In to Dashboard &rarr;
+        </a>
+      </div>
+
+      <p style="margin: 0; font-size: 13px; color: #94a3b8; line-height: 1.5; text-align: center;">
+        <strong>Security Notice:</strong> Please log in and change your temporary password under Settings after your initial session.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background: #0A0F1D; padding: 18px 24px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 12px; color: #64748b;">
+      <p style="margin: 0;">&copy; ${new Date().getFullYear()} Carrezza Global Solutions &bull; Zuna Central Admin</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
 export const emailService = {
   /**
    * Send ticket assignment email to admin member using Nodemailer
@@ -249,19 +328,7 @@ export const emailService = {
    */
   async sendTeamWelcomeEmail({ member, rawPassword }) {
     const subject = 'Welcome to Zuna Support Team — Your Access Credentials';
-    const html = `
-      <div style="font-family: sans-serif; padding: 24px; color: #1e293b; max-width: 500px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px;">
-        <h2 style="color: #0284c7; margin-top: 0;">Hello ${member.name},</h2>
-        <p>You have been invited to the <strong>Zuna Central Support Admin Portal</strong> as a <strong>${(member.role || '').replace('_', ' ')}</strong>.</p>
-        <p>Your login credentials are:</p>
-        <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 16px 0;">
-          <p style="margin: 4px 0;"><strong>Portal URL:</strong> <a href="${process.env.FRONTEND_ORIGIN || 'http://localhost:5173'}/admin/login">Admin Login</a></p>
-          <p style="margin: 4px 0;"><strong>Email:</strong> ${member.email}</p>
-          <p style="margin: 4px 0;"><strong>Password:</strong> ${rawPassword}</p>
-        </div>
-        <p style="font-size: 13px; color: #64748b;">Please log in and update your password immediately.</p>
-      </div>
-    `;
+    const html = generateTeamWelcomeEmailHtml({ member, rawPassword });
     return dispatchEmail({ to: member.email, subject, html });
   }
 };
