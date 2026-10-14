@@ -421,7 +421,7 @@ export const TicketsTable = () => {
               style={{
                 position: 'absolute',
                 inset: 0,
-                background: 'rgba(0, 0, 0, 0.65)',
+                background: 'rgba(43, 33, 24, 0.45)',
                 backdropFilter: 'blur(4px)'
               }}
             />
@@ -441,11 +441,11 @@ export const TicketsTable = () => {
                 height: '100vh',
                 display: 'flex',
                 flexDirection: 'column',
-                borderRadius: 0,
+                borderRadius: 'var(--radius-card, 24px) 0 0 var(--radius-card, 24px)',
                 borderRight: 'none',
                 borderTop: 'none',
                 borderBottom: 'none',
-                background: 'var(--surface)',
+                background: 'var(--bg-card)',
                 overflowY: 'auto'
               }}
             >

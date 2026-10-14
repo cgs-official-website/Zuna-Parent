@@ -20,8 +20,8 @@ export const Analytics = () => {
   const { kpis, volume, performance, loading } = useAnalytics(range);
   const { isDark } = useTheme();
 
-  const accentColor = isDark ? '#FFD60A' : '#FFC300';
-  const textColor = isDark ? '#A1A1AA' : '#64748B';
+  const accentColor = isDark ? '#8FB596' : '#4A6B50';
+  const textColor = isDark ? '#CFC6B6' : '#8C8378';
 
   return (
     <div className="admin-container">
@@ -104,9 +104,6 @@ export const Analytics = () => {
               <div style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>
                 {kpis?.slaComplianceRate ? `${kpis.slaComplianceRate}%` : 'N/A'}
               </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--success)' }}>
-                {kpis?.slaTarget ? `Target: ${kpis.slaTarget}%` : 'Standard SLA: 95%'}
-              </span>
             </div>
           </div>
 
@@ -156,7 +153,6 @@ export const Analytics = () => {
               <div style={{ fontSize: '1.75rem', fontWeight: 800, fontFamily: 'var(--font-display)' }}>
                 {kpis?.firstContactResolution ? `${kpis.firstContactResolution}%` : 'N/A'}
               </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Target: 80%+</span>
             </div>
           </div>
         </div>

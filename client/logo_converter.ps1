@@ -1,8 +1,8 @@
 # Load drawing assembly
 Add-Type -AssemblyName System.Drawing
 
-$srcPath = "c:\Users\Admin\Desktop\Zuna\Zuna_HRMS_Logo.png"
-$dstPath = "c:\Users\Admin\Desktop\Zuna\Zuna_HRMS_Logo_Navy.png"
+$srcPath = Join-Path $PSScriptRoot "public\logo.png"
+$dstPath = Join-Path $PSScriptRoot "public\logo.png"
 
 if (-not (Test-Path $srcPath)) {
     Write-Error "Source image not found at $srcPath"
@@ -14,11 +14,11 @@ $width = $srcImg.Width
 $height = $srcImg.Height
 $dstImg = New-Object System.Drawing.Bitmap ($width, $height)
 
-# Target Gradient Start and End (Deep Navy to Lighter/Electric Blue)
-$r1, $g1, $b1 = 11, 25, 44       # #0B192C Deep Navy
-$r2, $g2, $b2 = 0, 163, 255      # #00A3FF Electric Blue
+# Target Gradient Start and End (Sage & Cream Theme: Deep Forest Green to Sage Green)
+$r1, $g1, $b1 = 58, 86, 64       # #3A5640 Deep Forest Green (Primary)
+$r2, $g2, $b2 = 143, 181, 150    # #8FB596 Sage Green (Primary Soft / Accent)
 
-Write-Host "Converting logo ($width x $height) to navy blue gradient..."
+Write-Host "Converting logo ($width x $height) to Sage & Forest Green palette gradient..."
 
 for ($y = 0; $y -lt $height; $y++) {
     for ($x = 0; $x -lt $width; $x++) {

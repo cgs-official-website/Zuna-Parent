@@ -46,29 +46,29 @@ export const RoleBadge = ({ role }) => {
   const norm = role.toUpperCase();
 
   let style = {
-    background: 'var(--surface-2)',
-    color: 'var(--text-secondary)',
+    background: 'var(--bg-sage-soft)',
+    color: 'var(--text-heading)',
     border: '1px solid var(--border)'
   };
 
   if (norm === 'SUPER_ADMIN') {
     style = {
-      background: 'var(--accent-light)',
-      color: 'var(--text)',
-      border: '1px solid var(--accent)',
+      background: 'rgba(232, 119, 63, 0.15)',
+      color: 'var(--accent)',
+      border: '1px solid rgba(232, 119, 63, 0.35)',
       fontWeight: 700
     };
   } else if (norm === 'SUPPORT_LEAD') {
     style = {
-      background: 'var(--info-bg)',
-      color: 'var(--info)',
-      border: '1px solid rgba(2, 132, 199, 0.25)'
+      background: 'var(--bg-sage-soft)',
+      color: 'var(--primary)',
+      border: '1px solid rgba(74, 107, 80, 0.25)'
     };
   } else if (norm === 'SUPPORT_ENGINEER') {
     style = {
-      background: 'var(--success-bg)',
-      color: 'var(--success)',
-      border: '1px solid rgba(16, 185, 129, 0.25)'
+      background: 'var(--bg-sage-soft)',
+      color: 'var(--primary-dark)',
+      border: '1px solid rgba(74, 107, 80, 0.25)'
     };
   }
 

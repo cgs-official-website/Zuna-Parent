@@ -38,7 +38,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '550px' }) 
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'rgba(0, 0, 0, 0.65)',
+              background: 'rgba(43, 33, 24, 0.45)',
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)'
             }}
@@ -59,9 +59,9 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '550px' }) 
               maxHeight: '90vh',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: 'var(--radius-lg)',
+              borderRadius: 'var(--radius-card, 24px)',
               overflow: 'hidden',
-              background: 'var(--surface)'
+              background: 'var(--bg-card)'
             }}
           >
             {/* Header */}

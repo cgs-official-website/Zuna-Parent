@@ -43,7 +43,7 @@ const ProductCard = ({ product, onOpenDemo, onOpenTicket }) => {
     }
     if (!hasExternalUrl) {
       e.preventDefault();
-      onOpenDemo(product.name);
+      onOpenDemo(product.name || product.title);
     }
   };
 
@@ -62,9 +62,9 @@ const ProductCard = ({ product, onOpenDemo, onOpenTicket }) => {
             position: 'absolute', 
             top: '1.25rem', 
             right: '1.25rem', 
-            background: 'rgba(148, 163, 184, 0.12)', 
-            border: '1px solid rgba(148, 163, 184, 0.25)', 
-            color: '#94a3b8', 
+            background: 'var(--bg-sage-soft)', 
+            border: '1px solid var(--border)', 
+            color: 'var(--text-muted)', 
             padding: '0.25rem 0.65rem', 
             borderRadius: '50px', 
             fontSize: '0.72rem', 
@@ -79,15 +79,15 @@ const ProductCard = ({ product, onOpenDemo, onOpenTicket }) => {
       )}
 
       <div className="product-card-top">
-        <div className="product-icon-wrapper" style={isUpcoming ? { background: 'rgba(148, 163, 184, 0.1)', color: '#94a3b8' } : {}}>
-          {renderIcon(product.icon || 'Layers')}
+        <div className="product-icon-wrapper" style={isUpcoming ? { background: 'transparent', color: 'var(--text-muted)' } : {}}>
+          {renderIcon(product.icon || product.iconKey || 'Layers')}
         </div>
-        <h3 className="product-name">{product.name}</h3>
+        <h3 className="product-name">{product.name || product.title}</h3>
         <p className="product-desc">{product.description}</p>
         
         {product.features && (
           <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Features: </strong> {product.features}
+            <strong style={{ color: 'var(--text-heading)' }}>Features: </strong> {product.features}
           </div>
         )}
       </div>
@@ -116,20 +116,42 @@ const ProductCard = ({ product, onOpenDemo, onOpenTicket }) => {
             rel={hasExternalUrl ? "noopener noreferrer" : ""}
             onClick={handleLinkClick}
             className="product-link"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.35rem', 
+              fontWeight: 600,
+              color: '#000',
+              outline: 'none',
+              WebkitTapHighlightColor: 'transparent'
+            }}
           >
             {hasExternalUrl ? 'Learn More' : 'Request Demo'} 
-            <FiArrowRight size={16} />
+            <FiArrowRight size={16} style={{ color: '#000' }} />
           </a>
         )}
 
         <button 
-          onClick={() => onOpenTicket(product.id, product.name)} 
+          onClick={() => onOpenTicket(product.id, product.name || product.title)} 
           className="btn-action" 
           title="Raise support ticket"
-          style={{ borderRadius: '50px', padding: '0.4rem 0.8rem', fontSize: '0.75rem', display: 'flex', gap: '0.25rem', alignItems: 'center', background: 'rgba(255, 195, 0, 0.1)', color: 'var(--accent)', border: '1px solid rgba(255, 195, 0, 0.2)' }}
+          style={{ 
+            borderRadius: '50px', 
+            padding: '0.4rem 0.8rem', 
+            fontSize: '0.75rem', 
+            display: 'flex', 
+            gap: '0.25rem', 
+            alignItems: 'center', 
+            background: 'transparent', 
+            color: '#000', 
+            border: 'none',
+            boxShadow: 'none',
+            outline: 'none',
+            cursor: 'pointer',
+            WebkitTapHighlightColor: 'transparent'
+          }}
         >
-          <FiLifeBuoy size={12} /> Support
+          <FiLifeBuoy size={12} style={{ color: '#000' }} /> Support
         </button>
       </div>
     </div>

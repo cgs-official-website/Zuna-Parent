@@ -6,7 +6,7 @@ export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('zuna_theme');
     if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    return 'light';
   });
 
   useEffect(() => {

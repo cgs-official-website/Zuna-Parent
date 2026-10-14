@@ -346,9 +346,6 @@ export const TeamManager = () => {
       {/* Add New Member Modal */}
       <Modal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} title="Add New Team Member">
         <form onSubmit={handleInviteSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-          <div style={{ background: 'var(--accent-light)', padding: '10px 14px', borderRadius: 'var(--radius-sm)', fontSize: '0.8125rem', color: 'var(--text)', lineHeight: 1.4 }}>
-            ✉️ An onboarding email with these credentials will be automatically sent via <strong>Nodemailer</strong>.
-          </div>
 
           <div>
             <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
@@ -584,9 +581,6 @@ export const TeamManager = () => {
       {/* Create New Role Modal */}
       <Modal isOpen={isCreateRoleOpen} onClose={() => setIsCreateRoleOpen(false)} title="Create New Role">
         <form onSubmit={handleCreateRoleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-          <div style={{ background: 'var(--accent-light)', padding: '10px 14px', borderRadius: 'var(--radius-sm)', fontSize: '0.8125rem', color: 'var(--text)', lineHeight: 1.4 }}>
-            🛡️ Create custom organizational titles (e.g. <em>Customer Success Manager</em>, <em>QA Specialist</em>). It will immediately be available in the Add and Edit Team Member popups.
-          </div>
 
           <div>
             <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>

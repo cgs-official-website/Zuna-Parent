@@ -64,7 +64,7 @@ export const DashboardLayout = () => {
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(0,0,0,0.6)',
+              background: 'rgba(43, 33, 24, 0.45)',
               backdropFilter: 'blur(4px)',
               zIndex: 9940
             }}
@@ -84,6 +84,7 @@ export const DashboardLayout = () => {
           flexDirection: 'column',
           zIndex: 9945,
           borderRadius: 0,
+          background: 'var(--bg-card)',
           borderRight: '1px solid var(--border)',
           borderTop: 'none',
           borderBottom: 'none',
@@ -183,6 +184,7 @@ export const DashboardLayout = () => {
                 key={item.path}
                 to={item.path}
                 title={isCollapsed ? item.label : undefined}
+                className="admin-sidebar-link"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -192,13 +194,13 @@ export const DashboardLayout = () => {
                   borderRadius: 'var(--radius-sm)',
                   fontSize: '0.875rem',
                   fontWeight: isActive ? 700 : 500,
-                  color: isActive ? 'var(--accent-contrast)' : 'var(--text-secondary)',
-                  background: isActive ? 'var(--accent)' : 'transparent',
-                  boxShadow: isActive ? 'var(--shadow-glow)' : 'none',
+                  color: isActive ? '#FFFFFF' : 'var(--text-heading)',
+                  background: isActive ? 'var(--primary)' : 'transparent',
+                  boxShadow: isActive ? 'var(--shadow-card)' : 'none',
                   transition: 'all var(--transition-fast)'
                 }}
               >
-                <Icon size={18} color={isActive ? 'var(--accent-contrast)' : 'currentColor'} />
+                <Icon size={18} color={isActive ? '#FFFFFF' : 'currentColor'} />
                 {!isCollapsed && <span>{item.label}</span>}
               </NavLink>
             );
@@ -228,14 +230,14 @@ export const DashboardLayout = () => {
                   width: '36px',
                   height: '36px',
                   borderRadius: '50%',
-                  background: 'linear-gradient(135deg, var(--accent) 0%, #E6AF00 100%)',
-                  color: '#0A0A0A',
+                  background: 'var(--primary)',
+                  color: '#FFFFFF',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontWeight: 700,
                   fontSize: '0.875rem',
-                  boxShadow: '0 2px 8px var(--accent-glow)'
+                  boxShadow: 'var(--shadow-card)'
                 }}
                 title={`${user?.name || 'Admin'} (${user?.role || 'Administrator'})`}
               >
@@ -304,14 +306,14 @@ export const DashboardLayout = () => {
                     width: '36px',
                     height: '36px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--accent) 0%, #E6AF00 100%)',
-                    color: '#0A0A0A',
+                    background: 'var(--primary)',
+                    color: '#FFFFFF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 700,
                     fontSize: '0.875rem',
-                    boxShadow: '0 2px 8px var(--accent-glow)',
+                    boxShadow: 'var(--shadow-card)',
                     flexShrink: 0
                   }}
                 >
@@ -423,6 +425,7 @@ export const DashboardLayout = () => {
             justifyContent: 'space-between',
             padding: '0 var(--space-4)',
             borderRadius: 0,
+            background: 'var(--bg-page)',
             borderBottom: '1px solid var(--border)',
             borderTop: 'none',
             borderRight: 'none',
@@ -439,33 +442,6 @@ export const DashboardLayout = () => {
             >
               {isMobileOpen ? <FiX size={20} /> : <FiMenu size={20} />}
             </button>
-
-            {/* Realtime Connection Status Pill */}
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '3px 10px',
-                borderRadius: 'var(--radius-full)',
-                background: isConnected ? 'var(--success-bg)' : 'var(--surface-2)',
-                border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.25)' : 'var(--border)'}`,
-                fontSize: '0.6875rem',
-                fontWeight: 700,
-                color: isConnected ? 'var(--success)' : 'var(--text-secondary)'
-              }}
-            >
-              <span
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  background: isConnected ? 'var(--success)' : 'var(--text-muted)'
-                }}
-                className={isConnected ? 'badge-pulse' : ''}
-              />
-              <span>{isConnected ? 'LIVE SYNC' : 'SYSTEM READY'}</span>
-            </div>
           </div>
 
           {/* Right: Theme Switcher, Notifications, User */}

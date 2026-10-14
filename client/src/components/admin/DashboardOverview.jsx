@@ -34,11 +34,11 @@ export const DashboardOverview = () => {
   const { isDark } = useTheme();
 
   // Color constants for charts
-  const accentColor = isDark ? '#FFD60A' : '#FFC300';
+  const accentColor = isDark ? '#8FB596' : '#4A6B50';
   const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
-  const textColor = isDark ? '#A1A1AA' : '#64748B';
+  const textColor = isDark ? '#CFC6B6' : '#8C8378';
 
-  const productColors = ['#00F5D4', '#0084FF', '#818CF8', '#FBBF24', '#F43F5E'];
+  const productColors = ['#4A6B50', '#A9BCA0', '#E8773F', '#D9B26F', '#8C8378'];
 
   return (
     <div className="admin-container">
@@ -400,12 +400,12 @@ const KpiCard = ({ title, value, icon: Icon, trend, accentColor }) => {
           style={{
             width: '36px',
             height: '36px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'var(--surface-2)',
+            borderRadius: 'var(--radius-icon, 16px)',
+            background: 'var(--bg-sage-soft)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: accentColor
+            color: 'var(--primary)'
           }}
         >
           <Icon size={18} />
@@ -417,7 +417,7 @@ const KpiCard = ({ title, value, icon: Icon, trend, accentColor }) => {
           fontSize: '1.875rem',
           fontWeight: 800,
           fontFamily: 'var(--font-display)',
-          color: 'var(--text)',
+          color: 'var(--text-heading)',
           letterSpacing: '-0.02em',
           lineHeight: 1.1
         }}

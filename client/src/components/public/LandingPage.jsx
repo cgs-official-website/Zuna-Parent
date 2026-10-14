@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  FiCpu,
   FiLayers,
   FiZap,
   FiShield,
@@ -23,11 +22,11 @@ import '../../styles/landing.css';
 function LandingPage() {
   const [products, setProducts] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   // Modals state
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
-  
+
   // Selected product for support ticket
   const [selectedTicketProduct, setSelectedTicketProduct] = useState({ id: '', name: '' });
 
@@ -74,7 +73,7 @@ function LandingPage() {
       });
 
       reveals.forEach(el => revealObserver.observe(el));
-      
+
       return () => {
         reveals.forEach(el => revealObserver.unobserve(el));
       };
@@ -127,9 +126,9 @@ function LandingPage() {
             <img src="/logo.png" alt="Zuna Logo" className="logo-img" />
             <span className="logo-text">Zuna</span>
           </Link>
-          
-          <button 
-            className={`nav-toggle ${isMobileMenuOpen ? 'active' : ''}`} 
+
+          <button
+            className={`nav-toggle ${isMobileMenuOpen ? 'active' : ''}`}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle navigation"
           >
@@ -149,10 +148,12 @@ function LandingPage() {
           </ul>
 
           <div className="nav-cta">
-            <button onClick={() => openTicketModal()} className="btn btn-secondary" style={{ marginRight: '1rem', padding: '0.65rem 1.25rem', fontSize: '0.85rem' }}>
+            <button onClick={() => openTicketModal()} className="btn btn-secondary">
               Raise Ticket
             </button>
-            <button onClick={() => openDemoModal()} className="btn btn-primary">Request Demo</button>
+            <button onClick={() => openDemoModal()} className="btn btn-primary">
+              Request Demo
+            </button>
           </div>
         </div>
       </header>
@@ -166,13 +167,9 @@ function LandingPage() {
       <section className="hero" id="home">
         <div className="glow-blob blob-1"></div>
         <div className="glow-blob blob-2"></div>
-        
+
         <div className="hero-container">
           <div className="hero-content reveal">
-            <div className="hero-tagline">
-              <FiCpu size={16} />
-              Enterprise-Grade Platform
-            </div>
             <h1 className="hero-title">Powering Businesses with <span>Smart Software</span> Solutions</h1>
             <p className="hero-subtitle">Zuna provides comprehensive management systems for Education, Hospitality, HR, and more - all in one unified place.</p>
             <div className="hero-ctas">
@@ -194,22 +191,22 @@ function LandingPage() {
       {/* Trusted By / Social Proof */}
       <section className="trusted-by">
         <div className="trusted-container">
-          <h3 className="trusted-title">Trusted by industry-leading enterprises worldwide</h3>
+          <h3 className="trusted-title" style={{ color: '#000000', fontWeight: 800 }}>Carrezza Global Solutions Pvt Ltd</h3>
           <div className="trusted-marquee">
             <div className="trusted-marquee-track">
-              <span className="trusted-logo">EduTech Global</span>
-              <span className="trusted-logo">HR Solutions Inc.</span>
-              <span className="trusted-logo">DineSync Group</span>
-              <span className="trusted-logo">SchoolGrid</span>
-              <span className="trusted-logo">EventPro Corp</span>
-              <span className="trusted-logo">FinPay Systems</span>
+              <span className="trusted-logo">School Management Syetem</span>
+              <span className="trusted-logo">HR management system.</span>
+              <span className="trusted-logo">College Management System</span>
+              <span className="trusted-logo">Clinic Management System</span>
+              <span className="trusted-logo">Turf Booking App</span>
+              <span className="trusted-logo">Customer Relationship Management</span>
               {/* Duplicate set for seamless infinite loop scroll */}
-              <span className="trusted-logo">EduTech Global</span>
-              <span className="trusted-logo">HR Solutions Inc.</span>
-              <span className="trusted-logo">DineSync Group</span>
-              <span className="trusted-logo">SchoolGrid</span>
-              <span className="trusted-logo">EventPro Corp</span>
-              <span className="trusted-logo">FinPay Systems</span>
+              <span className="trusted-logo">School Management Syetem</span>
+              <span className="trusted-logo">HR management system.</span>
+              <span className="trusted-logo">College Management System</span>
+              <span className="trusted-logo">Clinic Management System</span>
+              <span className="trusted-logo">Turf Booking App</span>
+              <span className="trusted-logo">Customer Relationship Management</span>
             </div>
           </div>
         </div>
@@ -222,14 +219,14 @@ function LandingPage() {
           <h2 className="section-title">Comprehensive Management Solutions</h2>
           <p className="section-subtitle">Discover our ecosystem of professional, high-performance software modules tailored to meet your industry's demands.</p>
         </div>
-        
+
         <div className="products-grid">
           {products.map(prod => (
-            <ProductCard 
-              key={prod.id} 
-              product={prod} 
-              onOpenDemo={openDemoModal} 
-              onOpenTicket={openTicketModal} 
+            <ProductCard
+              key={prod.id}
+              product={prod}
+              onOpenDemo={openDemoModal}
+              onOpenTicket={openTicketModal}
             />
           ))}
           {products.length === 0 && (
@@ -249,7 +246,7 @@ function LandingPage() {
             <p className="section-subtitle" style={{ marginBottom: '2.5rem' }}>
               Zuna empowers organizations to scale operations, eliminate redundancies, and accelerate efficiency across multiple industrial and academic branches.
             </p>
-            
+
             <div className="why-features">
               <div className="feature-item">
                 <div className="feature-icon-wrapper">
@@ -281,7 +278,7 @@ function LandingPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="why-visual reveal">
             <div className="why-visual-wrapper">
               <div className="why-mockup-ui">
@@ -337,22 +334,22 @@ function LandingPage() {
           <h2 className="section-title">How Zuna Integrates Into Your Business</h2>
           <p className="section-subtitle">Get up and running in minutes with our guided integration path.</p>
         </div>
-        
+
         <div className="steps-container reveal">
           <div className="steps-line"></div>
-          
+
           <div className="step-card">
             <div className="step-number">1</div>
             <h3 className="step-title">Choose Your Solution</h3>
             <p className="step-desc">Select one or multiple management tools fitting your business model.</p>
           </div>
-          
+
           <div className="step-card">
             <div className="step-number">2</div>
             <h3 className="step-title">Get Onboarded</h3>
             <p className="step-desc">Receive guided system configuration from our technical deployment team.</p>
           </div>
-          
+
           <div className="step-card">
             <div className="step-number">3</div>
             <h3 className="step-title">Grow Your Business</h3>
@@ -362,24 +359,26 @@ function LandingPage() {
       </section>
 
       {/* About Company Section */}
-      <section className="section section-bg-alt" id="about-carrezza" style={{ padding: '7rem 2rem' }}>
-        <div className="why-container" style={{ maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
-          <div className="section-header reveal" style={{ marginBottom: '2rem' }}>
+      <section className="section section-bg-alt" id="about-carrezza" style={{ padding: '6rem 2rem' }}>
+        <div className="about-card reveal">
+          <div className="section-header" style={{ marginBottom: '1.75rem' }}>
             <span className="section-badge">Behind the Technology</span>
-            <h2 className="section-title">About Zuna & Carrezza Global Solutions</h2>
+            <h2 className="section-title">
+              About Zuna & <span style={{ color: '#000000', fontWeight: 800 }}>Carrezza Global Solutions Pvt Ltd</span>
+            </h2>
           </div>
-          <div className="reveal" style={{ maxWidth: '800px', margin: '0 auto', fontSize: '1.1rem', lineHeight: 1.8, color: 'var(--text-main)' }}>
-            <p style={{ marginBottom: '1.5rem' }}>
-              Zuna is a comprehensive enterprise software platform suite developed by <strong>Carrezza Global Solutions Pvt Ltd</strong>, a leading IT services company based in Erode, Tamil Nadu, India. Our team specializes in delivering enterprise-grade solutions for HR management, education, hospitality, retail, and more.
+          <div className="about-card-desc">
+            <p>
+              Zuna is a comprehensive enterprise software platform suite developed by <strong style={{ color: '#000000', fontWeight: 800 }}>Carrezza Global Solutions Pvt Ltd</strong>, a leading IT services company based in Erode, Tamil Nadu, India. Our team specializes in delivering enterprise-grade solutions for HR management, education, hospitality, retail, and more.
             </p>
-            <p style={{ fontWeight: 600, color: 'var(--text-headings)', marginBottom: '1.5rem' }}>
+            <p style={{ fontWeight: 600, color: 'var(--text-heading)', marginBottom: '1.75rem' }}>
               For corporate inquiries or partnership opportunities, visit:
             </p>
-            <p>
-              <a href="https://www.teamcarrezza.com" target="_blank" rel="noreferrer" className="btn btn-primary" style={{ borderRadius: '50px', padding: '1rem 2.5rem', fontSize: '1.05rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+            <div>
+              <a href="https://www.teamcarrezza.com" target="_blank" rel="noreferrer" className="btn btn-primary" style={{ borderRadius: '50px', padding: '0.9rem 2.25rem', fontSize: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
                 Visit Our Website
               </a>
-            </p>
+            </div>
           </div>
         </div>
       </section>
@@ -421,31 +420,31 @@ function LandingPage() {
 
           <div className="footer-about-company">
             <h4 className="footer-links-title">About Company</h4>
-            <p className="footer-company-name" style={{ fontWeight: 700, color: '#ffffff', marginBottom: '0.5rem' }}>Carrezza Global Solutions Pvt Ltd</p>
-            <p className="footer-company-desc" style={{ fontSize: '0.85rem', lineHeight: 1.6, color: '#94a3b8', marginBottom: '1rem' }}>
+            <p className="footer-company-name" style={{ fontWeight: 800, color: '#000000', marginBottom: '0.5rem' }}>Carrezza Global Solutions Pvt Ltd</p>
+            <p className="footer-company-desc" style={{ fontSize: '0.88rem', lineHeight: 1.65, color: 'var(--text-body)', marginBottom: '1.25rem' }}>
               Carrezza Global Solutions is a premier IT services & BPO solutions provider headquartered in Erode, Tamil Nadu. We specialize in enterprise software development, AI automation, cloud solutions, and digital transformation for global businesses.
             </p>
-            <div className="footer-company-info" style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <div className="footer-company-info" style={{ fontSize: '0.88rem', color: 'var(--text-body)', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <p style={{ margin: 0, display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                <FiMapPin size={14} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '0.2rem' }} />
-                <a 
-                  href="https://www.google.com/maps/search/Carrezza+Global+Solutions,+Perundurai,+Erode,+Tamil+Nadu,+India" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <FiMapPin size={15} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '0.2rem' }} />
+                <a
+                  href="https://www.google.com/maps/search/Carrezza+Global+Solutions,+Perundurai,+Erode,+Tamil+Nadu,+India"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="footer-location-link"
                   title="Open location in Google Maps"
                 >
-                  <span className="location-title">Carrezza Global Solutions, Perundurai, Erode, Tamil Nadu, India</span>
-                  <span className="location-subtitle">(Near URC Bar, Perundurai)</span>
+                  <span className="location-title" style={{ color: 'var(--text-body)' }}>Carrezza Global Solutions, Perundurai, Erode, Tamil Nadu, India</span>
+                  <span className="location-subtitle" style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.8rem' }}>(Near URC Bar, Perundurai)</span>
                 </a>
               </p>
               <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <FiMail size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                <a href="mailto:info@teamcarrezza.com" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>info@teamcarrezza.com</a>
+                <FiMail size={15} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                <a href="mailto:info@teamcarrezza.com" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>info@teamcarrezza.com</a>
               </p>
               <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <FiGlobe size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                <a href="https://www.teamcarrezza.com" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>www.teamcarrezza.com</a>
+                <FiGlobe size={15} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                <a href="https://www.teamcarrezza.com" target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'none' }}>www.teamcarrezza.com</a>
               </p>
             </div>
           </div>
@@ -495,9 +494,9 @@ function LandingPage() {
         </div>
 
         <div className="footer-bottom" style={{ flexDirection: 'column', gap: '1rem', alignItems: 'center', textAlign: 'center' }}>
-          <p style={{ margin: 0 }}>&copy; 2026 Carrezza Global Solutions Pvt Ltd. All Rights Reserved.</p>
-          <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0, lineHeight: 1.5 }}>
-            Zuna is developed and powered by <a href="https://www.teamcarrezza.com" target="_blank" rel="noreferrer" className="footer-attribution-link">Carrezza Global Solutions</a> - Premier IT Services & Solutions Provider
+          <p style={{ margin: 0, color: 'var(--text-body)' }}>&copy; 2026 <strong style={{ color: '#000000', fontWeight: 800 }}>Carrezza Global Solutions Pvt Ltd</strong>. All Rights Reserved.</p>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.5 }}>
+            Zuna is developed and powered by <a href="https://www.teamcarrezza.com" target="_blank" rel="noreferrer" className="footer-attribution-link"><strong style={{ color: '#000000', fontWeight: 800 }}>Carrezza Global Solutions</strong></a> - Premier IT Services & Solutions Provider
           </p>
         </div>
       </footer>
@@ -507,7 +506,7 @@ function LandingPage() {
         <div className="modal open" onClick={() => setIsDemoModalOpen(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setIsDemoModalOpen(false)}>&times;</button>
-            
+
             {demoSuccess ? (
               <div style={{ textAlign: 'center', padding: '2rem 0' }}>
                 <div style={{ width: '64px', height: '64px', background: 'rgba(255, 195, 0, 0.12)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)', marginBottom: '1.5rem' }}>
@@ -523,15 +522,15 @@ function LandingPage() {
               <>
                 <h3 className="modal-title">Request a Live Demo</h3>
                 <p className="modal-desc" style={{ marginBottom: '1.5rem' }}>See how Zuna's unified management software can power your operations.</p>
-                
+
                 <form onSubmit={handleDemoSubmit}>
                   <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                     <label htmlFor="demo-name" className="form-label">Full Name *</label>
-                    <input 
-                      type="text" 
-                      id="demo-name" 
-                      className="form-input" 
-                      placeholder="William Butcher" 
+                    <input
+                      type="text"
+                      id="demo-name"
+                      className="form-input"
+                      placeholder="William Butcher"
                       value={demoForm.name}
                       onChange={(e) => setDemoForm(prev => ({ ...prev, name: e.target.value }))}
                       required
@@ -539,11 +538,11 @@ function LandingPage() {
                   </div>
                   <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                     <label htmlFor="demo-email" className="form-label">Work Email *</label>
-                    <input 
-                      type="email" 
-                      id="demo-email" 
-                      className="form-input" 
-                      placeholder="william@company.com" 
+                    <input
+                      type="email"
+                      id="demo-email"
+                      className="form-input"
+                      placeholder="william@company.com"
                       value={demoForm.email}
                       onChange={(e) => setDemoForm(prev => ({ ...prev, email: e.target.value }))}
                       required
@@ -551,11 +550,11 @@ function LandingPage() {
                   </div>
                   <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                     <label htmlFor="demo-phone" className="form-label">Phone Number *</label>
-                    <input 
-                      type="tel" 
-                      id="demo-phone" 
-                      className="form-input" 
-                      placeholder="e.g. +91 98765 43210" 
+                    <input
+                      type="tel"
+                      id="demo-phone"
+                      className="form-input"
+                      placeholder="e.g. +91 98765 43210"
                       pattern="[0-9\s\+\-]{10,20}"
                       title="Phone number must be at least 10 digits and can include spaces, +, or -"
                       value={demoForm.phone}
@@ -565,11 +564,11 @@ function LandingPage() {
                   </div>
                   <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                     <label htmlFor="demo-company" className="form-label">Company Name *</label>
-                    <input 
-                      type="text" 
-                      id="demo-company" 
-                      className="form-input" 
-                      placeholder="Acme Corp" 
+                    <input
+                      type="text"
+                      id="demo-company"
+                      className="form-input"
+                      placeholder="Acme Corp"
                       value={demoForm.company}
                       onChange={(e) => setDemoForm(prev => ({ ...prev, company: e.target.value }))}
                       required
@@ -577,9 +576,9 @@ function LandingPage() {
                   </div>
                   <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                     <label htmlFor="demo-product" className="form-label">Primary Product of Interest *</label>
-                    <select 
-                      id="demo-product" 
-                      className="form-select" 
+                    <select
+                      id="demo-product"
+                      className="form-select"
                       value={demoForm.product}
                       onChange={(e) => setDemoForm(prev => ({ ...prev, product: e.target.value }))}
                       required
@@ -590,11 +589,11 @@ function LandingPage() {
                       ))}
                     </select>
                   </div>
-                  
+
                   <button type="submit" className="btn btn-primary modal-submit" style={{ width: '100%', padding: '0.85rem', fontSize: '1rem', marginTop: '0.5rem' }}>
                     Schedule Demo
                   </button>
-                  
+
                   <p style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                     Or email us directly at <a href="mailto:info@teamcarrezza.com" style={{ color: 'var(--accent)', fontWeight: 600 }}>info@teamcarrezza.com</a>
                   </p>
@@ -610,7 +609,7 @@ function LandingPage() {
         <div className="modal open" onClick={() => setIsTicketModalOpen(false)}>
           <div className="modal-content ticket-form-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setIsTicketModalOpen(false)}>&times;</button>
-            <TicketRaiseForm 
+            <TicketRaiseForm
               products={products}
               initialProductId={selectedTicketProduct.id}
               initialProductName={selectedTicketProduct.name}

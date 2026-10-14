@@ -547,15 +547,15 @@ const Settings = () => {
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
                   <FiMoon size={20} style={{ color: '#FFD60A' }} />
-                  <span style={{ fontWeight: 700, fontSize: '1rem' }}>Obsidian Dark</span>
+                  <span style={{ fontWeight: 700, fontSize: '1rem' }}>Sage Forest Dark</span>
                 </div>
                 <p style={{ fontSize: '0.8rem', color: '#A0A0A0', lineHeight: 1.4, margin: 0 }}>
-                  Pure black (#0A0A0A) background with glowing neon yellow (#FFD60A) primary accents and sleek glass cards.
+                  Deep forest dark (#1C211C) background with sage green (#8FB596) and terracotta accents.
                 </p>
                 <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
-                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#0A0A0A', border: '1px solid #333' }} />
-                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#1A1A1A' }} />
-                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#FFD60A' }} />
+                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#1C211C', border: '1px solid #354035' }} />
+                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#252C25' }} />
+                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#8FB596' }} />
                 </div>
               </div>
 
@@ -566,8 +566,8 @@ const Settings = () => {
                   padding: 'var(--space-4)',
                   borderRadius: 'var(--radius-lg)',
                   border: theme === 'light' ? '2px solid var(--accent)' : '1px solid var(--border)',
-                  background: '#FFFFFF',
-                  color: '#0A0A0A',
+                  background: '#FCF8EE',
+                  color: '#2B2118',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   position: 'relative',
@@ -581,7 +581,7 @@ const Settings = () => {
                       top: '12px',
                       right: '12px',
                       background: 'var(--accent)',
-                      color: '#000000',
+                      color: '#FFFFFF',
                       width: '24px',
                       height: '24px',
                       borderRadius: '50%',
@@ -594,16 +594,16 @@ const Settings = () => {
                   </div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-2)' }}>
-                  <FiSun size={20} style={{ color: '#D4A000' }} />
-                  <span style={{ fontWeight: 700, fontSize: '1rem' }}>Crisp Light</span>
+                  <FiSun size={20} style={{ color: '#4A6B50' }} />
+                  <span style={{ fontWeight: 700, fontSize: '1rem' }}>Warm Cream Light</span>
                 </div>
-                <p style={{ fontSize: '0.8rem', color: '#555555', lineHeight: 1.4, margin: 0 }}>
-                  Ultra-clean white (#FFFFFF) background with warm golden amber (#FFC300) accents and high legibility.
+                <p style={{ fontSize: '0.8rem', color: '#5A5148', lineHeight: 1.4, margin: 0 }}>
+                  Warm cream (#F6EFE0) background with deep forest green (#4A6B50) and orange accents.
                 </p>
                 <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
-                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#FFFFFF', border: '1px solid #CCC' }} />
-                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#F4F4F5' }} />
-                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#FFC300' }} />
+                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#F6EFE0', border: '1px solid #E6DCC8' }} />
+                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#FCF8EE' }} />
+                  <div style={{ width: '24px', height: '24px', borderRadius: '4px', background: '#4A6B50' }} />
                 </div>
               </div>
             </div>
