@@ -79,7 +79,7 @@ export const Analytics = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
             gap: 'var(--space-4)',
             marginBottom: 'var(--space-6)'
           }}
@@ -206,7 +206,8 @@ export const Analytics = () => {
           </p>
         </div>
 
-        <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
+        {/* Desktop Table View */}
+        <div className="table-container hide-on-mobile" style={{ border: 'none', borderRadius: 0 }}>
           <table className="data-table">
             <thead>
               <tr>
@@ -235,6 +236,34 @@ export const Analytics = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Native Cards View */}
+        <div className="show-on-mobile mobile-card-list" style={{ padding: 'var(--space-4)' }}>
+          {performance && performance.length > 0 ? (
+            performance.map((staff, idx) => (
+              <div key={idx} className="mobile-card-item">
+                <div className="mobile-card-header">
+                  <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>{staff.name || 'Staff Member'}</span>
+                  <span style={{ color: 'var(--success)', fontWeight: 600, fontSize: '0.8125rem' }}>
+                    {staff.csat ? `★ ${staff.csat} / 5.0` : 'N/A'}
+                  </span>
+                </div>
+                <div className="mobile-card-row">
+                  <span className="mobile-card-label">Resolved Tickets</span>
+                  <span className="mobile-card-val" style={{ fontWeight: 700, color: 'var(--accent)' }}>{staff.resolvedCount ?? 0}</span>
+                </div>
+                <div className="mobile-card-row">
+                  <span className="mobile-card-label">Avg Resolution</span>
+                  <span className="mobile-card-val">{staff.avgTime || '0 hrs'}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div style={{ textAlign: 'center', padding: 'var(--space-6) var(--space-4)', color: 'var(--text-muted)' }}>
+              <p style={{ margin: 0, fontSize: '0.875rem' }}>No staff resolution data recorded yet.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

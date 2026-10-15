@@ -92,7 +92,7 @@ const ProductCard = ({ product, onOpenDemo, onOpenTicket }) => {
         )}
       </div>
 
-      <div className="product-card-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', width: '100%', gap: '0.5rem' }}>
+      <div className="product-card-bottom" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', width: '100%', gap: '0.5rem', flexWrap: 'wrap' }}>
         {isUpcoming ? (
           <span 
             className="product-link disabled"

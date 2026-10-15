@@ -78,7 +78,7 @@ export const DashboardOverview = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
             gap: 'var(--space-4)',
             marginBottom: 'var(--space-6)'
           }}
@@ -133,16 +133,15 @@ export const DashboardOverview = () => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))',
           gap: 'var(--space-5)',
           marginBottom: 'var(--space-6)'
         }}
       >
         {/* Ticket Volume Area Chart */}
         <div
-          className="card"
+          className="card col-span-2-responsive"
           style={{
-            gridColumn: 'span 2',
             minHeight: '380px',
             display: 'flex',
             flexDirection: 'column'
@@ -151,8 +150,10 @@ export const DashboardOverview = () => {
           <div
             style={{
               display: 'flex',
+              flexWrap: 'wrap',
               alignItems: 'center',
               justifyContent: 'space-between',
+              gap: '8px',
               marginBottom: 'var(--space-4)'
             }}
           >
@@ -305,11 +306,13 @@ export const DashboardOverview = () => {
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div
           style={{
-            padding: 'var(--space-4) var(--space-6)',
+            padding: 'var(--space-4) var(--space-5)',
             borderBottom: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 'var(--space-2)'
           }}
         >
           <div>
@@ -335,7 +338,8 @@ export const DashboardOverview = () => {
           </a>
         </div>
 
-        <div className="table-container" style={{ border: 'none', borderRadius: 0 }}>
+        {/* Desktop Table View */}
+        <div className="table-container hide-on-mobile" style={{ border: 'none', borderRadius: 0 }}>
           <table className="data-table">
             <thead>
               <tr>
@@ -376,6 +380,39 @@ export const DashboardOverview = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Native Cards View */}
+        <div className="show-on-mobile mobile-card-list" style={{ padding: 'var(--space-4)' }}>
+          {tickets.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 'var(--space-6) var(--space-4)', color: 'var(--text-muted)' }}>
+              <FiInbox size={32} style={{ margin: '0 auto var(--space-2)', opacity: 0.5, display: 'block' }} />
+              <p style={{ margin: 0, fontSize: '0.875rem' }}>No incoming tickets in the stream yet.</p>
+            </div>
+          ) : (
+            tickets.slice(0, 5).map((ticket) => (
+              <div key={ticket.id} className="mobile-card-item">
+                <div className="mobile-card-header">
+                  <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.875rem' }}>#{ticket.id}</span>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <PriorityBadge priority={ticket.priority} />
+                    <StatusBadge status={ticket.status} />
+                  </div>
+                </div>
+                <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--text-primary)', margin: '4px 0' }}>
+                  {ticket.subject}
+                </div>
+                <div className="mobile-card-row">
+                  <span className="mobile-card-label">Product</span>
+                  <span className="mobile-card-val">{ticket.product?.title || ticket.productNameSnapshot || 'General'}</span>
+                </div>
+                <div className="mobile-card-row">
+                  <span className="mobile-card-label">Created</span>
+                  <span className="mobile-card-val">{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

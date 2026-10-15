@@ -233,6 +233,7 @@ const Settings = () => {
           borderBottom: '1px solid var(--border)',
           marginBottom: 'var(--space-6)',
           overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
           paddingBottom: 'var(--space-2)'
         }}
       >
@@ -251,6 +252,8 @@ const Settings = () => {
             fontWeight: 600,
             fontSize: '0.9rem',
             cursor: 'pointer',
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
             transition: 'all 0.2s ease'
           }}
         >
@@ -272,6 +275,8 @@ const Settings = () => {
             fontWeight: 600,
             fontSize: '0.9rem',
             cursor: 'pointer',
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
             transition: 'all 0.2s ease'
           }}
         >
@@ -376,7 +381,7 @@ const Settings = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: 'var(--space-1)', color: 'var(--text-main)' }}>
                   Full Name
@@ -430,7 +435,7 @@ const Settings = () => {
               Leave blank if you do not wish to change your password.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: 'var(--space-1)', color: 'var(--text-main)' }}>
                   New Password
@@ -510,7 +515,7 @@ const Settings = () => {
               Select between our high-contrast Obsidian Dark theme or pure Crisp White theme. Both feature our signature CGS vibrant yellow accent.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
               {/* Dark Option Card */}
               <div
                 onClick={() => setTheme('dark')}

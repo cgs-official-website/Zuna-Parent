@@ -58,7 +58,7 @@ const LoginForm = ({ isAuthenticated }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px',
+        padding: 'clamp(16px, 4vw, 24px)',
         position: 'relative',
         background: 'var(--bg)',
         overflow: 'hidden'
@@ -88,7 +88,7 @@ const LoginForm = ({ isAuthenticated }) => {
         style={{
           width: '100%',
           maxWidth: '440px',
-          padding: 'var(--space-8) var(--space-7)',
+          padding: 'clamp(24px, 6vw, 36px) clamp(16px, 5vw, 28px)',
           borderRadius: 'var(--radius-xl)',
           position: 'relative',
           zIndex: 1,

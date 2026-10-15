@@ -17,17 +17,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '550px' }) 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9990,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px'
-          }}
-        >
+        <div className="modal-overlay-container">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -46,35 +36,21 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '550px' }) 
 
           {/* Modal Card / Mobile Sheet */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 24 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            exit={{ opacity: 0, scale: 0.95, y: 24 }}
             transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-            className="glass-panel"
+            className="modal-dialog-panel"
             style={{
-              position: 'relative',
-              zIndex: 1,
-              width: '100%',
-              maxWidth,
-              maxHeight: '90vh',
-              display: 'flex',
-              flexDirection: 'column',
-              borderRadius: 'var(--radius-card, 24px)',
-              overflow: 'hidden',
-              background: 'var(--bg-card)'
+              maxWidth
             }}
           >
+            {/* Mobile Bottom-Sheet Pull Handle */}
+            <div className="modal-sheet-handle" />
+
             {/* Header */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: 'var(--space-4) var(--space-6)',
-                borderBottom: '1px solid var(--border)'
-              }}
-            >
-              <h3 style={{ fontSize: '1.125rem', margin: 0 }}>{title}</h3>
+            <div className="modal-header-bar">
+              <h3 style={{ fontSize: '1.125rem', margin: 0, fontWeight: 700, color: 'var(--text-heading)' }}>{title}</h3>
               <button
                 onClick={onClose}
                 aria-label="Close modal"
@@ -86,12 +62,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = '550px' }) 
             </div>
 
             {/* Content Body */}
-            <div
-              style={{
-                padding: 'var(--space-6)',
-                overflowY: 'auto'
-              }}
-            >
+            <div className="modal-body-content">
               {children}
             </div>
           </motion.div>

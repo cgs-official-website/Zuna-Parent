@@ -212,7 +212,7 @@ export const TicketsTable = () => {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="input-field"
-          style={{ width: 'auto', minWidth: '130px' }}
+          style={{ flex: '1 1 140px', minWidth: '120px' }}
         >
           <option value="ALL">All Statuses</option>
           <option value="OPEN">Open</option>
@@ -226,7 +226,7 @@ export const TicketsTable = () => {
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
           className="input-field"
-          style={{ width: 'auto', minWidth: '130px' }}
+          style={{ flex: '1 1 140px', minWidth: '120px' }}
         >
           <option value="ALL">All Priorities</option>
           <option value="URGENT">Urgent</option>
@@ -240,7 +240,7 @@ export const TicketsTable = () => {
           value={productFilter}
           onChange={(e) => setProductFilter(e.target.value)}
           className="input-field"
-          style={{ width: 'auto', minWidth: '160px' }}
+          style={{ flex: '1 1 160px', minWidth: '140px' }}
         >
           <option value="ALL">All Products</option>
           {products.map((prod) => (
@@ -355,7 +355,7 @@ export const TicketsTable = () => {
           </div>
 
           {/* Mobile Stacked Cards View */}
-          <div className="show-on-mobile" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="show-on-mobile mobile-card-list">
             {filteredTickets.map((ticket) => (
               <div
                 key={ticket.id}
@@ -432,27 +432,12 @@ export const TicketsTable = () => {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="glass-panel"
-              style={{
-                position: 'relative',
-                zIndex: 1,
-                width: '100%',
-                maxWidth: '640px',
-                height: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-                borderRadius: 'var(--radius-card, 24px) 0 0 var(--radius-card, 24px)',
-                borderRight: 'none',
-                borderTop: 'none',
-                borderBottom: 'none',
-                background: 'var(--bg-card)',
-                overflowY: 'auto'
-              }}
+              className="glass-panel admin-ticket-drawer"
             >
               {/* Drawer Header */}
               <div
                 style={{
-                  padding: 'var(--space-5) var(--space-6)',
+                  padding: 'var(--space-4) var(--space-5)',
                   borderBottom: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'center',
@@ -485,13 +470,13 @@ export const TicketsTable = () => {
               </div>
 
               {/* Drawer Body */}
-              <div style={{ padding: 'var(--space-6)', flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+              <div style={{ padding: 'var(--space-5)', flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
                 {/* Lifecycle Stepper */}
                 <div style={{ background: 'var(--surface-2)', padding: 'var(--space-4)', borderRadius: 'var(--radius-md)' }}>
                   <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '10px' }}>
                     Status Lifecycle
                   </span>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '6px' }}>
                     {statuses.map((st) => {
                       const isCurrent = selectedTicket.status === st;
                       return (

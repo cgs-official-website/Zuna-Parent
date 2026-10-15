@@ -49,7 +49,7 @@ export const ProductForm = ({ product, onSubmit, onCancel, loading }) => {
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: '12px' }}>
         <div>
           <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
             Category Vertical
@@ -116,7 +116,7 @@ export const ProductForm = ({ product, onSubmit, onCancel, loading }) => {
         />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: 'var(--space-2)' }}>
+      <div className="modal-actions-footer">
         <button type="button" onClick={onCancel} className="btn-secondary">
           Cancel
         </button>

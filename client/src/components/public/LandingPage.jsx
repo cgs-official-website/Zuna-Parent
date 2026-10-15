@@ -136,8 +136,13 @@ function LandingPage() {
             <li><a href="#solutions" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Solutions</a></li>
             <li><a href="#about" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>About</a></li>
             <li><a href="#contact" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Contact</a></li>
-            <li className="mobile-cta-only">
-              <button onClick={() => { setIsMobileMenuOpen(false); openDemoModal(); }} className="btn btn-primary">Request Demo</button>
+            <li className="mobile-cta-only" style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '1rem' }}>
+              <button onClick={() => { setIsMobileMenuOpen(false); openDemoModal(); }} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                Request Demo
+              </button>
+              <button onClick={() => { setIsMobileMenuOpen(false); openTicketModal(); }} className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
+                Raise Ticket
+              </button>
             </li>
           </ul>
 

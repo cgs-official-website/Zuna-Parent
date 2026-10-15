@@ -74,7 +74,7 @@ export const DashboardLayout = () => {
 
       {/* Sidebar (Desktop Collapsible & Mobile Slide-over Drawer) */}
       <aside
-        className={`glass-panel ${isMobileOpen ? 'mobile-drawer-open' : ''}`}
+        className={`admin-sidebar glass-panel ${isMobileOpen ? 'mobile-drawer-open' : ''}`}
         style={{
           width: isCollapsed ? '72px' : '240px',
           height: '100vh',
@@ -149,6 +149,16 @@ export const DashboardLayout = () => {
               <FiChevronLeft size={18} />
             </button>
           )}
+
+          {/* Mobile Drawer Close Button */}
+          <button
+            onClick={() => setIsMobileOpen(false)}
+            aria-label="Close sidebar drawer"
+            className="btn-ghost show-on-mobile"
+            style={{ padding: '6px', borderRadius: 'var(--radius-sm)' }}
+          >
+            <FiX size={18} />
+          </button>
         </div>
 
         {isCollapsed && (
@@ -433,7 +443,7 @@ export const DashboardLayout = () => {
           }}
         >
           {/* Left: Mobile Toggle & Page Title */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               onClick={() => setIsMobileOpen((prev) => !prev)}
               aria-label="Toggle mobile navigation"
@@ -442,6 +452,12 @@ export const DashboardLayout = () => {
             >
               {isMobileOpen ? <FiX size={20} /> : <FiMenu size={20} />}
             </button>
+            <div className="mobile-brand-title">
+              <img src="/logo.png" alt="Zuna" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+              <span>
+                {navItems.find((item) => location.pathname.startsWith(item.path))?.label || 'Dashboard'}
+              </span>
+            </div>
           </div>
 
           {/* Right: Theme Switcher, Notifications, User */}
@@ -477,31 +493,10 @@ export const DashboardLayout = () => {
         </header>
 
         {/* Dynamic Nested Route Content */}
-        <main style={{ flex: 1 }}>
+        <main style={{ flex: 1, minWidth: 0, width: '100%' }}>
           <Outlet />
         </main>
       </div>
-
-      {/* Responsive Media Query Styles */}
-      <style>{`
-        @media (max-width: 768px) {
-          .hide-on-mobile { display: none !important; }
-          .show-on-mobile { display: flex !important; }
-          aside {
-            position: fixed !important;
-            left: -280px;
-            top: 0;
-            width: 260px !important;
-            transition: left 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-          }
-          aside.mobile-drawer-open {
-            left: 0 !important;
-          }
-        }
-        @media (min-width: 769px) {
-          .show-on-mobile { display: none !important; }
-        }
-      `}</style>
     </div>
   );
 };

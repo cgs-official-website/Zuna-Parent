@@ -518,10 +518,26 @@ textarea::placeholder,
    RESPONSIVE LAYOUT & CONTAINER GRIDS
    ========================================================================== */
 
+/* ==========================================================================
+   RESPONSIVE LAYOUT & CONTAINER GRIDS
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 .admin-layout {
   display: flex;
   min-height: 100vh;
+  width: 100%;
   background: var(--bg-page);
+  position: relative;
+  overflow-x: hidden;
 }
 
 .admin-main {
@@ -529,10 +545,12 @@ textarea::placeholder,
   display: flex;
   flex-direction: column;
   min-width: 0;
+  width: 100%;
   transition: margin-left var(--transition-normal);
 }
 
-.admin-container {
+.admin-container,
+.admin-page-container {
   max-width: 1440px;
   width: 100%;
   margin: 0 auto;
@@ -540,24 +558,108 @@ textarea::placeholder,
 }
 
 @media (min-width: 640px) {
-  .admin-container {
-    padding: var(--space-6) var(--space-4);
+  .admin-container,
+  .admin-page-container {
+    padding: var(--space-6) var(--space-5);
   }
 }
 
 @media (min-width: 1024px) {
-  .admin-container {
-    padding: var(--space-8);
+  .admin-container,
+  .admin-page-container {
+    padding: var(--space-8) var(--space-6);
   }
 }
 
-@media (max-width: 900px) {
-  div[style*="span 2"], .col-span-2 {
+/* Responsive Grid Helpers */
+.col-span-2-responsive {
+  grid-column: span 2;
+}
+
+@media (max-width: 960px) {
+  .col-span-2-responsive,
+  div[style*="span 2"],
+  .col-span-2 {
     grid-column: span 1 !important;
   }
 }
 
-/* Data Table Container */
+/* Visibility Utilities */
+.hide-on-mobile {
+  display: initial;
+}
+
+.show-on-mobile {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  .show-on-mobile {
+    display: flex !important;
+  }
+
+  .flex-col-mobile {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .w-full-mobile {
+    width: 100% !important;
+  }
+
+  /* Prevent auto zoom on iOS */
+  input, select, textarea, .input-field {
+    font-size: 16px !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .show-on-mobile {
+    display: none !important;
+  }
+}
+
+/* Mobile Sidebar Drawer Navigation Rules */
+@media (max-width: 768px) {
+  .admin-sidebar {
+    position: fixed !important;
+    left: -280px !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 270px !important;
+    height: 100vh !important;
+    z-index: 9950 !important;
+    box-shadow: 8px 0 32px rgba(43, 33, 24, 0.22) !important;
+    transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .admin-sidebar.mobile-drawer-open {
+    left: 0 !important;
+  }
+}
+
+/* Mobile Header Bar & Brand Context */
+.mobile-brand-title {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-brand-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Data Table Container with Responsive Scroll Hint */
 .table-container {
   width: 100%;
   overflow-x: auto;
@@ -566,6 +668,24 @@ textarea::placeholder,
   border: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow-card);
+  position: relative;
+}
+
+.table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: var(--surface-2);
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
 }
 
 .data-table {
@@ -611,6 +731,75 @@ textarea::placeholder,
   border-bottom: none;
 }
 
+/* Mobile Stacked Card View for Tables */
+.mobile-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.mobile-card-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.mobile-card-item:active {
+  transform: scale(0.99);
+}
+
+.mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  gap: 8px;
+}
+
+.mobile-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.84rem;
+  margin-bottom: 12px;
+}
+
+.mobile-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.mobile-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  margin-top: 6px;
+}
+
+.mobile-card-label {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.mobile-card-val {
+  color: var(--text-heading);
+  font-weight: 600;
+  text-align: right;
+  font-size: 0.8125rem;
+}
+
 /* Admin Sidebar Navigation */
 .admin-sidebar-link {
   transition: all var(--transition-fast);
@@ -630,4 +819,132 @@ textarea::placeholder,
 .admin-sidebar-link.active svg,
 .admin-sidebar-link.active:hover svg {
   color: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   MODAL & MOBILE BOTTOM-SHEET SYSTEM
+   ========================================================================== */
+
+.modal-overlay-container {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 3vw, 24px);
+}
+
+.modal-dialog-panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  border-radius: var(--radius-card, 24px);
+}
+
+.modal-sheet-handle {
+  display: none;
+}
+
+.modal-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) clamp(16px, 4vw, var(--space-6));
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.modal-body-content {
+  padding: clamp(16px, 4vw, var(--space-6));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+}
+
+.modal-actions-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .modal-overlay-container {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-dialog-panel {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 88vh !important;
+    border-radius: 24px 24px 0 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+
+  .modal-sheet-handle {
+    display: block !important;
+    width: 38px;
+    height: 4px;
+    background: var(--border-strong);
+    border-radius: 999px;
+    margin: 10px auto 4px auto;
+    flex-shrink: 0;
+  }
+
+  .modal-actions-footer {
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .modal-actions-footer button,
+  .modal-actions-footer .btn-primary,
+  .modal-actions-footer .btn-secondary {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 42px !important;
+  }
+}
+
+/* ==========================================================================
+   ADMIN TICKET DETAIL DRAWER RESPONSIVENESS
+   ========================================================================== */
+
+.admin-ticket-drawer {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-card, 24px) 0 0 var(--radius-card, 24px);
+  background: var(--bg-card);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .admin-ticket-drawer {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    border-radius: 0 !important;
+  }
 }

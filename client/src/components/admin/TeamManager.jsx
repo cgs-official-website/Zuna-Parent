@@ -173,7 +173,7 @@ export const TeamManager = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           {/* Create Role Button */}
           <button
             onClick={() => setIsCreateRoleOpen(true)}
@@ -202,7 +202,8 @@ export const TeamManager = () => {
           <TableSkeleton rows={4} cols={5} />
         </div>
       ) : (
-        <div className="table-container">
+        <>
+          <div className="table-container hide-on-mobile">
           <table className="data-table">
             <thead>
               <tr>
@@ -341,7 +342,124 @@ export const TeamManager = () => {
             </tbody>
           </table>
         </div>
-      )}
+
+        {/* Mobile Cards View */}
+        <div className="show-on-mobile mobile-card-list">
+          {team.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--text-muted)' }}>
+              No team members found yet.
+            </div>
+          ) : (
+            team.map((member) => (
+              <div key={member.id} className="mobile-card-item">
+                <div className="mobile-card-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '50%',
+                        background: 'var(--accent)',
+                        color: 'var(--accent-contrast)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        flexShrink: 0
+                      }}
+                    >
+                      {(member.name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+                        {member.name || 'Unnamed Agent'}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {member.email}
+                      </div>
+                    </div>
+                  </div>
+                  <RoleBadge role={member.customRole || member.role} />
+                </div>
+
+                <div className="mobile-card-body">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Access Status:</span>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        color: member.isActive ? 'var(--success)' : 'var(--danger)'
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          background: member.isActive ? 'var(--success)' : 'var(--danger)'
+                        }}
+                      />
+                      {member.isActive ? 'Active' : 'Disabled'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Active Tickets:</span>
+                    <span style={{ fontWeight: 700 }}>
+                      {member._count?.assignedTickets ?? 0} tickets
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mobile-card-footer" style={{ gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => handleOpenEdit(member)}
+                    className="btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '0.8rem', gap: '4px' }}
+                  >
+                    <FiEdit2 size={13} />
+                    <span>Edit Member</span>
+                  </button>
+
+                  {member.id !== user?.id && (
+                    <button
+                      onClick={() => handleToggleActive(member.id, member.isActive)}
+                      className="btn-ghost"
+                      style={{
+                        fontSize: '0.8rem',
+                        color: member.isActive ? 'var(--danger)' : 'var(--success)'
+                      }}
+                    >
+                      {member.isActive ? 'Deactivate' : 'Reactivate'}
+                    </button>
+                  )}
+
+                  {member.id !== user?.id && (
+                    <button
+                      onClick={() => handleDeleteMember(member)}
+                      className="btn-ghost"
+                      title="Delete staff account"
+                      style={{
+                        fontSize: '0.8rem',
+                        color: 'var(--danger)',
+                        marginLeft: 'auto'
+                      }}
+                    >
+                      <FiTrash2 size={15} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </>
+    )}
 
       {/* Add New Member Modal */}
       <Modal isOpen={isInviteOpen} onClose={() => setIsInviteOpen(false)} title="Add New Team Member">
@@ -442,7 +560,7 @@ export const TeamManager = () => {
             </select>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: 'var(--space-2)' }}>
+          <div className="modal-actions-footer">
             <button type="button" onClick={() => setIsInviteOpen(false)} className="btn-secondary">
               Cancel
             </button>
@@ -567,7 +685,7 @@ export const TeamManager = () => {
             </span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: 'var(--space-2)' }}>
+          <div className="modal-actions-footer">
             <button type="button" onClick={() => setIsEditOpen(false)} className="btn-secondary">
               Cancel
             </button>
@@ -629,7 +747,7 @@ export const TeamManager = () => {
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: 'var(--space-2)' }}>
+          <div className="modal-actions-footer">
             <button type="button" onClick={() => setIsCreateRoleOpen(false)} className="btn-secondary">
               Cancel
             </button>
