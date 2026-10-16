@@ -536,12 +536,12 @@ textarea::placeholder,
   max-width: 1440px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-4) var(--space-3);
 }
 
 @media (min-width: 640px) {
   .admin-container {
-    padding: var(--space-6);
+    padding: var(--space-6) var(--space-4);
   }
 }
 
@@ -551,10 +551,17 @@ textarea::placeholder,
   }
 }
 
+@media (max-width: 900px) {
+  div[style*="span 2"], .col-span-2 {
+    grid-column: span 1 !important;
+  }
+}
+
 /* Data Table Container */
 .table-container {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: var(--radius-card);
   border: 1px solid var(--border);
   background: var(--surface);
@@ -563,6 +570,7 @@ textarea::placeholder,
 
 .data-table {
   width: 100%;
+  min-width: 620px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.875rem;

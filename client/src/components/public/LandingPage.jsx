@@ -11,15 +11,19 @@ import {
   FiMapPin,
   FiMail,
   FiGlobe,
-  FiCheck
+  FiCheck,
+  FiSun,
+  FiMoon
 } from 'react-icons/fi';
 import ProductCard from './ProductCard';
 import TicketRaiseForm from './TicketRaiseForm';
 import { productsService } from '../../services/productsService';
 import { demoService } from '../../services/demoService';
+import { useTheme } from '../../context/ThemeContext.jsx';
 import '../../styles/landing.css';
 
 function LandingPage() {
+  const { theme, isDark, toggleTheme } = useTheme();
   const [products, setProducts] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -127,16 +131,6 @@ function LandingPage() {
             <span className="logo-text">Zuna</span>
           </Link>
 
-          <button
-            className={`nav-toggle ${isMobileMenuOpen ? 'active' : ''}`}
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle navigation"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-
           <ul className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
             <li><a href="#products" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Products</a></li>
             <li><a href="#solutions" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Solutions</a></li>
@@ -147,12 +141,51 @@ function LandingPage() {
             </li>
           </ul>
 
-          <div className="nav-cta">
-            <button onClick={() => openTicketModal()} className="btn btn-secondary">
-              Raise Ticket
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Animated Theme Toggle Button as in Dashboard */}
+            <button
+              onClick={toggleTheme}
+              aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+              title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: 'var(--radius-sm, 8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--surface-2, var(--bg-card))',
+                border: '1px solid var(--border)',
+                color: 'var(--text-heading)',
+                cursor: 'pointer',
+                transition: 'all var(--transition-fast, 0.2s ease)',
+                flexShrink: 0
+              }}
+            >
+              {isDark ? (
+                <FiSun size={18} color="var(--accent)" />
+              ) : (
+                <FiMoon size={18} color="var(--text-heading)" />
+              )}
             </button>
-            <button onClick={() => openDemoModal()} className="btn btn-primary">
-              Request Demo
+
+            <div className="nav-cta">
+              <button onClick={() => openTicketModal()} className="btn btn-secondary">
+                Raise Ticket
+              </button>
+              <button onClick={() => openDemoModal()} className="btn btn-primary">
+                Request Demo
+              </button>
+            </div>
+
+            <button
+              className={`nav-toggle ${isMobileMenuOpen ? 'active' : ''}`}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle navigation"
+            >
+              <span></span>
+              <span></span>
+              <span></span>
             </button>
           </div>
         </div>
