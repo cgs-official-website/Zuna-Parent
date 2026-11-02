@@ -10,28 +10,37 @@ export class TicketsService {
   static buildWhereClause(filters = {}) {
     const andConditions = [];
 
-    if (filters.status && filters.status !== 'all') {
-      andConditions.push({ status: filters.status });
+    if (filters.status && String(filters.status).toLowerCase() !== 'all') {
+      const validStatuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
+      const upper = String(filters.status).toUpperCase();
+      if (validStatuses.includes(upper)) {
+        andConditions.push({ status: upper });
+      }
     }
 
-    if (filters.priority && filters.priority !== 'all') {
-      andConditions.push({ priority: filters.priority });
+    if (filters.priority && String(filters.priority).toLowerCase() !== 'all') {
+      const validPriorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+      const upper = String(filters.priority).toUpperCase();
+      if (validPriorities.includes(upper)) {
+        andConditions.push({ priority: upper });
+      }
     }
 
-    if (filters.product && filters.product !== 'all') {
+    const prodFilter = filters.product || filters.productId || filters.product_id;
+    if (prodFilter && String(prodFilter).toLowerCase() !== 'all') {
       andConditions.push({
         OR: [
-          { productId: filters.product },
-          { productNameSnapshot: { contains: filters.product, mode: 'insensitive' } }
+          { productId: String(prodFilter) },
+          { productNameSnapshot: { contains: String(prodFilter), mode: 'insensitive' } }
         ]
       });
     }
 
-    if (filters.assignedAdminId) {
+    if (filters.assignedAdminId && String(filters.assignedAdminId).toLowerCase() !== 'all') {
       if (filters.assignedAdminId === 'unassigned') {
         andConditions.push({ assignedAdminId: null });
       } else {
-        andConditions.push({ assignedAdminId: filters.assignedAdminId });
+        andConditions.push({ assignedAdminId: String(filters.assignedAdminId) });
       }
     }
 

@@ -11,6 +11,14 @@ export class TicketsController {
   static async listTickets(req, res, next) {
     try {
       const query = listTicketsQuerySchema.parse(req.query);
+      const admin = req.admin;
+      const isSuperAdmin = admin?.role === 'SUPER_ADMIN' || admin?.role === 'ADMIN' || admin?.email === 'admin@zuna.com';
+      
+      // Non-super admin members only receive tickets assigned to them
+      if (admin && !isSuperAdmin) {
+        query.assignedAdminId = admin.id;
+      }
+
       const result = await TicketsService.listTickets(query);
       return res.status(200).json({
         success: true,
@@ -32,6 +40,17 @@ export class TicketsController {
     try {
       const { id } = req.params;
       const ticket = await TicketsService.getTicketById(id);
+      const admin = req.admin;
+      const isSuperAdmin = admin?.role === 'SUPER_ADMIN' || admin?.role === 'ADMIN' || admin?.email === 'admin@zuna.com';
+
+      // Non-super admin members can only access their assigned tickets
+      if (admin && !isSuperAdmin && ticket.assignedAdminId !== admin.id) {
+        return res.status(403).json({
+          success: false,
+          error: { message: 'You are only authorized to view tickets assigned to you.' }
+        });
+      }
+
       return res.status(200).json({
         success: true,
         data: ticket
@@ -45,6 +64,14 @@ export class TicketsController {
     try {
       const { id } = req.params;
       const body = updateTicketSchema.parse(req.body);
+      const admin = req.admin;
+      const isSuperAdmin = admin?.role === 'SUPER_ADMIN' || admin?.role === 'ADMIN' || admin?.email === 'admin@zuna.com';
+
+      // Regular staff cannot reassign tickets to other staff
+      if (!isSuperAdmin) {
+        delete body.assignedAdminId;
+      }
+
       const updated = await TicketsService.updateTicket(id, body);
       return res.status(200).json({
         success: true,
@@ -84,6 +111,12 @@ export class TicketsController {
   static async exportTickets(req, res, next) {
     try {
       const query = exportTicketsQuerySchema.parse(req.query);
+      const admin = req.admin;
+      const isSuperAdmin = admin?.role === 'SUPER_ADMIN' || admin?.role === 'ADMIN' || admin?.email === 'admin@zuna.com';
+
+      if (!isSuperAdmin) {
+        query.assignedAdminId = admin.id;
+      }
 
       if (query.format === 'pdf') {
         await TicketsService.exportPDF(query, res);

@@ -28,21 +28,27 @@ function AppRoutes() {
 
       {/* Admin Login */}
       <Route path="/admin" element={<LoginForm isAuthenticated={isAuthenticated} />} />
-      <Route path="/admin/login" element={<Navigate to="/admin" replace />} />
+      <Route path="/admin/login" element={<LoginForm isAuthenticated={isAuthenticated} />} />
 
       {/* Protected Admin Dashboard */}
       <Route path="/admin/dashboard" element={<AdminRoute />}>
         <Route element={<DashboardLayout />}>
           <Route index element={<Navigate to="overview" replace />} />
+          
+          {/* Accessible to all members (Overview, Tickets, Settings, Help) */}
           <Route path="overview" element={<DashboardOverview />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="products" element={<ProductsTable />} />
           <Route path="tickets" element={<TicketsTable />} />
-          <Route path="demo-requests" element={<DemoRequestsTable />} />
-          <Route path="team" element={<TeamManager />} />
-          <Route path="billing" element={<BillingManager />} />
           <Route path="settings" element={<Settings />} />
           <Route path="help-support" element={<HelpSupport />} />
+
+          {/* Super Admin Only Routes */}
+          <Route element={<AdminRoute allowedRoles={['SUPER_ADMIN']} />}>
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="products" element={<ProductsTable />} />
+            <Route path="demo-requests" element={<DemoRequestsTable />} />
+            <Route path="team" element={<TeamManager />} />
+            <Route path="billing" element={<BillingManager />} />
+          </Route>
         </Route>
       </Route>
 

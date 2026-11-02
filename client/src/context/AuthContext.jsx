@@ -19,7 +19,8 @@ export const AuthProvider = ({ children }) => {
       const refreshResult = await authService.refresh().catch(() => null);
       if (refreshResult?.accessToken) {
         setAccessToken(refreshResult.accessToken);
-        const currentUser = await authService.getMe().catch(() => null);
+        const meResult = await authService.getMe().catch(() => null);
+        const currentUser = meResult?.admin || meResult?.user || meResult;
         setUser(currentUser);
       } else {
         setUser(null);
@@ -45,7 +46,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const data = await authService.login(email, password);
-    const loggedUser = data.user || (await authService.getMe());
+    const rawUser = data?.admin || data?.user || (await authService.getMe());
+    const loggedUser = rawUser?.admin || rawUser?.user || rawUser;
     setUser(loggedUser);
     return loggedUser;
   };
@@ -59,10 +61,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const normalizedUser = user?.admin || user;
+  const userRole = normalizedUser?.role || null;
+
   const value = {
-    user,
-    role: user?.role || null,
-    isAuthenticated: !!user,
+    user: normalizedUser,
+    role: userRole,
+    isAuthenticated: !!normalizedUser,
     loading,
     login,
     logout,

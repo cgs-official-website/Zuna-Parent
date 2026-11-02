@@ -19,6 +19,15 @@ const LoginForm = ({ isAuthenticated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Auto-fill email from query param (?email=...)
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const queryEmail = params.get('email');
+    if (queryEmail) {
+      setEmail(queryEmail);
+    }
+  }, [location.search]);
+
   // If already logged in, redirect
   React.useEffect(() => {
     if (isAuthenticated) {

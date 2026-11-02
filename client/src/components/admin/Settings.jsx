@@ -938,7 +938,7 @@ const Settings = () => {
                   >
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--text-main)' }}>
-                        {prod.name}
+                        {prod.title || prod.name}
                       </div>
                       <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                         Product ID: <code>{prod.id}</code> • Status: <strong>{prod.status || 'Active'}</strong>

@@ -11,13 +11,17 @@ export const useTickets = (initialFilters = {}) => {
   const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20 });
   const [pulsingRowId, setPulsingRowId] = useState(null);
 
+  useEffect(() => {
+    setFilters(initialFilters);
+  }, [JSON.stringify(initialFilters)]);
+
   const fetchTickets = useCallback(async () => {
     setLoading(true);
     try {
       const res = await ticketsService.listTickets(filters);
       if (Array.isArray(res)) {
         setTickets(res);
-      } else if (res?.tickets) {
+      } else if (Array.isArray(res?.tickets)) {
         setTickets(res.tickets);
         if (res.meta) setMeta(res.meta);
       } else {

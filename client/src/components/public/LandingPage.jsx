@@ -25,6 +25,7 @@ import '../../styles/landing.css';
 function LandingPage() {
   const { theme, isDark, toggleTheme } = useTheme();
   const [products, setProducts] = useState([]);
+  const safeProducts = Array.isArray(products) ? products : [];
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Modals state
@@ -50,7 +51,7 @@ function LandingPage() {
   const fetchProducts = async () => {
     try {
       const data = await productsService.getProducts();
-      setProducts(data);
+      setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching products:', err);
     }
@@ -136,14 +137,6 @@ function LandingPage() {
             <li><a href="#solutions" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Solutions</a></li>
             <li><a href="#about" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>About</a></li>
             <li><a href="#contact" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>Contact</a></li>
-            <li className="mobile-cta-only" style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '1rem' }}>
-              <button onClick={() => { setIsMobileMenuOpen(false); openDemoModal(); }} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                Request Demo
-              </button>
-              <button onClick={() => { setIsMobileMenuOpen(false); openTicketModal(); }} className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
-                Raise Ticket
-              </button>
-            </li>
           </ul>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -259,7 +252,7 @@ function LandingPage() {
         </div>
 
         <div className="products-grid">
-          {products.map(prod => (
+          {safeProducts.map(prod => (
             <ProductCard
               key={prod.id}
               product={prod}
@@ -267,7 +260,7 @@ function LandingPage() {
               onOpenTicket={openTicketModal}
             />
           ))}
-          {products.length === 0 && (
+          {safeProducts.length === 0 && (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
               Loading products... (or no products available)
             </div>
@@ -490,22 +483,22 @@ function LandingPage() {
           <div>
             <h4 className="footer-links-title">Products</h4>
             <ul className="footer-links-list">
-              {products.filter(p => p.status !== 'Upcoming').map(prod => (
+              {safeProducts.filter(p => p.status !== 'Upcoming').map(prod => (
                 <li key={prod.id}>
-                  <a href="#products" className="footer-link">{prod.name}</a>
+                  <a href="#products" className="footer-link">{prod.title || prod.name}</a>
                 </li>
               ))}
 
-              {products.filter(p => p.status === 'Upcoming').length > 0 && (
+              {safeProducts.filter(p => p.status === 'Upcoming').length > 0 && (
                 <>
                   <li style={{ marginTop: '0.85rem', paddingTop: '0.65rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
                     <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#f59e0b', fontWeight: 700, display: 'block' }}>
                       Upcoming Products
                     </span>
                   </li>
-                  {products.filter(p => p.status === 'Upcoming').map(prod => (
+                  {safeProducts.filter(p => p.status === 'Upcoming').map(prod => (
                     <li key={prod.id}>
-                      <a href="#products" className="footer-link">{prod.name}</a>
+                      <a href="#products" className="footer-link">{prod.title || prod.name}</a>
                     </li>
                   ))}
                 </>
@@ -622,9 +615,12 @@ function LandingPage() {
                       required
                     >
                       <option value="" disabled>Select a product...</option>
-                      {products.map(prod => (
-                        <option key={prod.id} value={prod.name}>{prod.name}</option>
-                      ))}
+                      {safeProducts.map(prod => {
+                        const displayName = prod.title || prod.name;
+                        return (
+                          <option key={prod.id} value={displayName}>{displayName}</option>
+                        );
+                      })}
                     </select>
                   </div>
 
@@ -648,7 +644,7 @@ function LandingPage() {
           <div className="modal-content ticket-form-modal" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={() => setIsTicketModalOpen(false)}>&times;</button>
             <TicketRaiseForm
-              products={products}
+              products={safeProducts}
               initialProductId={selectedTicketProduct.id}
               initialProductName={selectedTicketProduct.name}
               onClose={() => setIsTicketModalOpen(false)}

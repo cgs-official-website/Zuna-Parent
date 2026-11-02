@@ -40,16 +40,29 @@ export const DashboardLayout = () => {
     setIsMobileOpen(false);
   }, [location.pathname]);
 
-  const navItems = [
+  const actualUser = user?.admin || user;
+  const userRole = (actualUser?.role || user?.role || '').toUpperCase();
+  const isSuperAdmin =
+    userRole === 'SUPER_ADMIN' ||
+    userRole === 'ADMIN' ||
+    userRole === 'ADMINISTRATOR' ||
+    actualUser?.email === 'admin@zuna.com';
+
+  const allNavItems = [
     { label: 'Overview', path: '/admin/dashboard/overview', icon: FiGrid },
     { label: 'Tickets', path: '/admin/dashboard/tickets', icon: FiInbox },
-    { label: 'Products', path: '/admin/dashboard/products', icon: FiLayers },
-    { label: 'Demo Leads', path: '/admin/dashboard/demo-requests', icon: FiCalendar },
-    { label: 'Team', path: '/admin/dashboard/team', icon: FiUsers },
-    { label: 'Billing', path: '/admin/dashboard/billing', icon: FiCreditCard },
-    { label: 'Analytics', path: '/admin/dashboard/analytics', icon: FiBarChart2 },
+    { label: 'Products', path: '/admin/dashboard/products', icon: FiLayers, superAdminOnly: true },
+    { label: 'Demo Leads', path: '/admin/dashboard/demo-requests', icon: FiCalendar, superAdminOnly: true },
+    { label: 'Team', path: '/admin/dashboard/team', icon: FiUsers, superAdminOnly: true },
+    { label: 'Billing', path: '/admin/dashboard/billing', icon: FiCreditCard, superAdminOnly: true },
+    { label: 'Analytics', path: '/admin/dashboard/analytics', icon: FiBarChart2, superAdminOnly: true },
     { label: 'Settings', path: '/admin/dashboard/settings', icon: FiSettings }
   ];
+
+  // If user is Super Admin, show all 8 items; otherwise only show Overview, Tickets, and Settings
+  const navItems = isSuperAdmin
+    ? allNavItems
+    : allNavItems.filter((item) => ['Overview', 'Tickets', 'Settings'].includes(item.label));
 
   return (
     <div className="admin-layout">
@@ -355,32 +368,12 @@ export const DashboardLayout = () => {
                       textOverflow: 'ellipsis',
                       lineHeight: 1.2
                     }}
-                    title={user?.name || 'Admin'}
+                    title={actualUser?.name || 'Admin'}
                   >
-                    {user?.name || 'Admin'}
+                    {actualUser?.name || 'Admin'}
                   </div>
                   <div style={{ marginTop: '3px', display: 'flex', alignItems: 'center' }}>
-                    {user?.role ? (
-                      <RoleBadge role={user.role} />
-                    ) : (
-                      <span
-                        style={{
-                          fontSize: '0.6875rem',
-                          fontWeight: 600,
-                          color: 'var(--accent)',
-                          background: 'var(--accent-light)',
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          letterSpacing: '0.03em',
-                          textTransform: 'uppercase',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        Administrator
-                      </span>
-                    )}
+                    <RoleBadge role={actualUser?.role || (isSuperAdmin ? 'SUPER_ADMIN' : 'SUPPORT_ENGINEER')} />
                   </div>
                 </div>
               </div>

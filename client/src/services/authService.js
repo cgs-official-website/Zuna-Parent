@@ -12,7 +12,8 @@ export const authService = {
 
   async getMe() {
     const response = await apiClient.get('/auth/me');
-    return response.data?.data?.user || response.data?.user || response.data?.data;
+    const data = response.data?.data || response.data;
+    return data?.admin || data?.user || data;
   },
 
   async refresh() {

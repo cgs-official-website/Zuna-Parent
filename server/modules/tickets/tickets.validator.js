@@ -3,8 +3,8 @@ import { z } from 'zod';
 export const listTicketsQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
-  status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'all']).optional(),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT', 'all']).optional(),
+  status: z.string().optional(),
+  priority: z.string().optional(),
   product: z.string().optional(),
   assignedAdminId: z.string().optional(),
   search: z.string().optional()

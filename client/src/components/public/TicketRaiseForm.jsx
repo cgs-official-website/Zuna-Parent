@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FiLifeBuoy } from 'react-icons/fi';
 import { ticketsService } from '../../services/ticketsService';
 
-const TicketRaiseForm = ({ products, initialProductId, initialProductName, onClose }) => {
+const TicketRaiseForm = ({ products = [], initialProductId, initialProductName, onClose }) => {
   const [ticketForm, setTicketForm] = useState({
     name: '',
     email: '',
@@ -18,11 +18,11 @@ const TicketRaiseForm = ({ products, initialProductId, initialProductName, onClo
 
   const handleProductChange = (e) => {
     const selectedId = e.target.value;
-    const selectedProd = products.find(p => p.id === selectedId);
+    const selectedProd = (products || []).find(p => p.id === selectedId);
     setTicketForm(prev => ({
       ...prev,
       productId: selectedId,
-      productName: selectedProd ? selectedProd.name : ''
+      productName: selectedProd ? (selectedProd.title || selectedProd.name) : ''
     }));
   };
 
@@ -109,8 +109,8 @@ const TicketRaiseForm = ({ products, initialProductId, initialProductName, onClo
             required
           >
             <option value="" disabled>Select the product...</option>
-            {products.map(prod => (
-              <option key={prod.id} value={prod.id}>{prod.name}</option>
+            {(products || []).map(prod => (
+              <option key={prod.id} value={prod.id}>{prod.title || prod.name}</option>
             ))}
           </select>
         </div>

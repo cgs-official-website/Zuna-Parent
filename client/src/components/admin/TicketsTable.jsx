@@ -30,6 +30,10 @@ export const TicketsTable = () => {
   const { team } = useTeam();
   const { products } = useProducts();
 
+  const actualUser = user?.admin || user;
+  const userRole = (actualUser?.role || '').toUpperCase();
+  const isSuperAdmin = userRole === 'SUPER_ADMIN' || userRole === 'ADMIN' || actualUser?.email === 'admin@zuna.com';
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [priorityFilter, setPriorityFilter] = useState('ALL');
@@ -38,8 +42,9 @@ export const TicketsTable = () => {
   const { tickets, loading, pulsingRowId, updateTicket, notifyAgent, refetch } = useTickets({
     status: statusFilter === 'ALL' ? undefined : statusFilter,
     priority: priorityFilter === 'ALL' ? undefined : priorityFilter,
-    product_id: productFilter === 'ALL' ? undefined : productFilter,
-    search: searchTerm || undefined
+    product: productFilter === 'ALL' ? undefined : productFilter,
+    search: searchTerm || undefined,
+    assignedAdminId: !isSuperAdmin && actualUser?.id ? actualUser.id : undefined
   });
 
   // Selected Ticket for Drawer
@@ -51,7 +56,11 @@ export const TicketsTable = () => {
   const [exporting, setExporting] = useState(false);
 
   // Filtered tickets in memory if needed
-  const filteredTickets = tickets.filter((t) => {
+  const filteredTickets = (Array.isArray(tickets) ? tickets : []).filter((t) => {
+    // If not super admin, only show tickets assigned to this team member
+    if (!isSuperAdmin && t.assignedAdminId !== actualUser?.id) {
+      return false;
+    }
     if (statusFilter !== 'ALL' && t.status !== statusFilter) return false;
     if (priorityFilter !== 'ALL' && t.priority !== priorityFilter) return false;
     if (productFilter !== 'ALL' && t.productId !== productFilter) return false;
@@ -149,9 +158,13 @@ export const TicketsTable = () => {
         }}
       >
         <div>
-          <h1 style={{ fontSize: '1.75rem', marginBottom: '4px' }}>Support Ticket Queue</h1>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '4px' }}>
+            {isSuperAdmin ? 'Support Ticket Queue' : 'My Assigned Tickets'}
+          </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-            Consolidated cross-app incident dispatching and resolution hub.
+            {isSuperAdmin
+              ? 'Consolidated cross-app incident dispatching and resolution hub.'
+              : 'Support tickets directly assigned to you for resolution.'}
           </p>
         </div>
 
@@ -243,7 +256,7 @@ export const TicketsTable = () => {
           style={{ flex: '1 1 160px', minWidth: '140px' }}
         >
           <option value="ALL">All Products</option>
-          {products.map((prod) => (
+          {(Array.isArray(products) ? products : []).map((prod) => (
             <option key={prod.id} value={prod.id}>
               {prod.title}
             </option>
@@ -508,32 +521,44 @@ export const TicketsTable = () => {
                   <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
                     Assigned Support Engineer
                   </span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-                    <select
-                      value={selectedTicket.assignedAdminId || ''}
-                      onChange={(e) => handleAgentAssignment(e.target.value)}
-                      className="input-field"
-                      style={{ flex: 1, minWidth: '180px' }}
-                    >
-                      <option value="">Unassigned</option>
-                      {team.map((member) => (
-                        <option key={member.id} value={member.id}>
-                          {member.name} ({member.email})
-                        </option>
-                      ))}
-                    </select>
+                  {isSuperAdmin ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                      <select
+                        value={selectedTicket.assignedAdminId || ''}
+                        onChange={(e) => handleAgentAssignment(e.target.value)}
+                        className="input-field"
+                        style={{ flex: 1, minWidth: '180px' }}
+                      >
+                        <option value="">Unassigned</option>
+                        {(Array.isArray(team) ? team : []).map((member) => (
+                          <option key={member.id} value={member.id}>
+                            {member.name} ({member.email})
+                          </option>
+                        ))}
+                      </select>
 
-                    <button
-                      type="button"
-                      onClick={handleNotifyAgent}
-                      disabled={notifying || !selectedTicket.assignedAdminId}
-                      className="btn-primary"
-                      style={{ height: '42px', padding: '0 14px', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}
-                    >
-                      <FiMail size={16} />
-                      <span>{notifying ? 'Dispatching...' : 'Notify via Nodemailer'}</span>
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        onClick={handleNotifyAgent}
+                        disabled={notifying || !selectedTicket.assignedAdminId}
+                        className="btn-primary"
+                        style={{ height: '42px', padding: '0 14px', fontSize: '0.8125rem', whiteSpace: 'nowrap' }}
+                      >
+                        <FiMail size={16} />
+                        <span>{notifying ? 'Dispatching...' : 'Notify via Nodemailer'}</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0' }}>
+                      <FiUser size={16} color="var(--accent)" />
+                      <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                        {selectedTicket.assignedAdmin?.name || actualUser?.name || 'Assigned to You'}
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        ({selectedTicket.assignedAdmin?.email || actualUser?.email})
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Ticket Details */}
